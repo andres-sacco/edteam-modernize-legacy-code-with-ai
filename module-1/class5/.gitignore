@@ -1,0 +1,14 @@
+target/
+*.log
+.idea/
+*.iml
+.settings/
+.project
+.classpath
+.claude/settings.local.json
+
+# Archivos de trabajo que generan los prompts del curso (docs/prompts) en la raíz del proyecto
+/analisis-*
+/ejemplos/
+/copia-flights.sql
+/backup-*.sql

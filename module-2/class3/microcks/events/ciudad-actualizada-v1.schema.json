@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://twa.com/flights/events/catalog/ciudad-actualizada/v1",
+  "title": "CiudadActualizada v1",
+  "description": "A city of the catalog was created, changed or deleted. Published by twa-flights-catalog (CityEventRelay) from flights.catalog_outbox in the exchange topic catalog.events with the routing key catalog.ciudad-actualizada.v1. The AMQP properties repeat eventId (message_id), eventType (type) and eventVersion (header eventVersion). Delivery is at least once: the consumer discards a repeated eventId and an event with a sequence lower than or equal to the last one applied for the same cityId. A new major version is a new routing key (v2) and a new schema; v1 only gets optional fields.",
+  "type": "object",
+  "required": ["eventId", "eventType", "eventVersion", "occurredAt", "source", "sequence", "operation", "cityId", "city"],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique id of the message. It is derived from the id of the outbox (UUID v3 of 'catalog_outbox:<id>'), so a republished event has the same eventId"
+    },
+    "eventType": { "const": "CiudadActualizada" },
+    "eventVersion": { "const": 1, "description": "Version of this schema" },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the change was written in flights.catalog_outbox (UTC)"
+    },
+    "source": { "const": "twa-flights-catalog" },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Id of the event in flights.catalog_outbox. It grows with every change, so it orders the events of the same city"
+    },
+    "operation": {
+      "enum": ["UPSERT", "DELETE"],
+      "description": "UPSERT: the city exists with the data of city. DELETE: the city with cityId does not exist anymore"
+    },
+    "cityId": { "type": "integer", "description": "Id of the city in the catalog (the key of the replica)" },
+    "city": {
+      "type": "object",
+      "description": "Same JSON as GET /cities/{code} of the catalog service (microcks/catalog-openapi.json). In a DELETE only the code",
+      "required": ["code"],
+      "properties": {
+        "code": { "type": "string" },
+        "name": { "type": "string" },
+        "timeZone": { "type": "string", "description": "IANA id of the time zone, never an offset" },
+        "country": {
+          "type": ["object", "null"],
+          "description": "The country when the event is published. Null if the country does not exist in the catalog",
+          "required": ["code"],
+          "properties": {
+            "code": { "type": "string" },
+            "name": { "type": ["string", "null"] },
+            "continent": {
+              "type": ["object", "null"],
+              "required": ["code"],
+              "properties": {
+                "code": { "type": "string" },
+                "name": { "type": ["string", "null"] }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "operation": { "const": "UPSERT" } } },
+      "then": { "properties": { "city": { "required": ["code", "name", "timeZone", "country"] } } }
+    }
+  ],
+  "examples": [
+    {
+      "eventId": "6f1c1f2a-4b0e-3c55-9a8e-2d1b5e0c7a11",
+      "eventType": "CiudadActualizada",
+      "eventVersion": 1,
+      "occurredAt": "2026-11-17T21:00:00.000Z",
+      "source": "twa-flights-catalog",
+      "sequence": 120,
+      "operation": "UPSERT",
+      "cityId": 1,
+      "city": {
+        "code": "BUE",
+        "name": "Buenos Aires",
+        "timeZone": "America/Argentina/Buenos_Aires",
+        "country": { "code": "AR", "name": "Argentina", "continent": { "code": "SA", "name": "South America" } }
+      }
+    },
+    {
+      "eventId": "0b7d5c3e-9a41-3f2b-8c6d-4e1f2a3b5c7d",
+      "eventType": "CiudadActualizada",
+      "eventVersion": 1,
+      "occurredAt": "2026-11-17T21:05:00.000Z",
+      "source": "twa-flights-catalog",
+      "sequence": 121,
+      "operation": "DELETE",
+      "cityId": 1,
+      "city": { "code": "BUE" }
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+# Recording rules of the rollout of the catalog service (M2 C4). They compare the local and the remote path of
+# catalog.lookup over the SAME window (the same 5 minutes, from the buckets of the histogram), and keep the baseline B
+# of the search as a query over the history instead of a number in a document.
+#
+# Metrics of the monolith (Micrometer → /actuator/prometheus):
+#   catalog_lookup_seconds_*{path=local|remote, operation, result}   one call to one path of the catalog
+#   http_server_requests_seconds_*{uri="/clusters/itineraries"}        the search
+#   catalog_rollout_remote_percentage                                  the flag that each instance applies
+#   catalog_rollout_rollbacks_total{rule}                              rollbacks of CatalogRolloutGuard
+groups:
+  - name: catalog-rollout
+    rules:
+      # The flag of the service: the highest one of its instances (they read the same table)
+      - record: catalog:rollout_remote_percentage:max
+        expr: max by (service) (catalog_rollout_remote_percentage{service="twa-flights-monolith"})
+
+      # --- The two paths of the catalog in the same window ---------------------------------------------------------
+      - record: catalog:lookup_calls:rate5m
+        expr: sum by (service, path) (rate(catalog_lookup_seconds_count{service="twa-flights-monolith"}[5m]))
+
+      # Without errors there is no series result="error": "or 0 * ..." keeps the ratio in 0 instead of no data
+      - record: catalog:lookup_error:ratio_rate5m
+        expr: |
+          (
+            sum by (service, path) (rate(catalog_lookup_seconds_count{service="twa-flights-monolith", result="error"}[5m]))
+            or
+            0 * sum by (service, path) (rate(catalog_lookup_seconds_count{service="twa-flights-monolith"}[5m]))
+          )
+          /
+          sum by (service, path) (rate(catalog_lookup_seconds_count{service="twa-flights-monolith"}[5m]))
+
+      - record: catalog:lookup_latency_seconds:mean_5m
+        expr: |
+          sum by (service, path) (rate(catalog_lookup_seconds_sum{service="twa-flights-monolith"}[5m]))
+          /
+          sum by (service, path) (rate(catalog_lookup_seconds_count{service="twa-flights-monolith"}[5m]))
+
+      - record: catalog:lookup_latency_seconds:p95_5m
+        expr: histogram_quantile(0.95, sum by (service, path, le) (rate(catalog_lookup_seconds_bucket{service="twa-flights-monolith"}[5m])))
+
+      - record: catalog:lookup_latency_seconds:p99_5m
+        expr: histogram_quantile(0.99, sum by (service, path, le) (rate(catalog_lookup_seconds_bucket{service="twa-flights-monolith"}[5m])))
+
+      # --- The search ----------------------------------------------------------------------------------------------
+      - record: search:requests:rate5m
+        expr: sum by (service, status) (rate(http_server_requests_seconds_count{service="twa-flights-monolith", uri="/clusters/itineraries"}[5m]))
+
+      # p95 of the searches that answered 200: the 400 of the validations are fast and would lower it
+      - record: search:latency_seconds:p95_5m
+        expr: histogram_quantile(0.95, sum by (service, le) (rate(http_server_requests_seconds_bucket{service="twa-flights-monolith", uri="/clusters/itineraries", status="200"}[5m])))
+
+      - record: search:unavailable:ratio_rate5m
+        expr: |
+          (
+            sum by (service) (rate(http_server_requests_seconds_count{service="twa-flights-monolith", uri="/clusters/itineraries", status="503"}[5m]))
+            or
+            0 * sum by (service) (rate(http_server_requests_seconds_count{service="twa-flights-monolith", uri="/clusters/itineraries"}[5m]))
+          )
+          /
+          sum by (service) (rate(http_server_requests_seconds_count{service="twa-flights-monolith", uri="/clusters/itineraries"}[5m]))
+
+      # --- Stages 1a (batch) and 1b (cache) of the extraction plan ---------------------------------------------------
+      # Calls to the catalog (any path, after the cache) per search. Criterion of 1a: ≤ 4
+      - record: catalog:lookups_per_search:rate5m
+        expr: |
+          sum by (service) (rate(catalog_lookup_seconds_count{service="twa-flights-monolith"}[5m]))
+          /
+          sum by (service) (rate(http_server_requests_seconds_count{service="twa-flights-monolith", uri="/clusters/itineraries"}[5m]))
+
+      # Hit ratio of the cache of cities. Criterion of 1b: ≥ 95 % after 10 minutes of warm up
+      - record: catalog:cache_hit:ratio_rate5m
+        expr: |
+          sum by (service) (rate(cache_gets_total{service="twa-flights-monolith", cache="catalog-cities", result="hit"}[5m]))
+          /
+          sum by (service) (rate(cache_gets_total{service="twa-flights-monolith", cache="catalog-cities"}[5m]))
+
+      # --- Inputs of the baseline: only the windows with the flag in 0 % (all the calls to the local path) --------
+      - record: search:latency_seconds:p95_5m_flag0
+        expr: search:latency_seconds:p95_5m and on (service) catalog:rollout_remote_percentage:max == 0
+
+      - record: catalog:lookup_latency_seconds:p95_5m_flag0
+        expr: catalog:lookup_latency_seconds:p95_5m{path="local"} and on (service) catalog:rollout_remote_percentage:max == 0
+
+  # Baseline B (plan of extraction, stage 0): the median of the p95 of 5 minutes of the last 7 days with the flag in
+  # 0 %. During a canary the series *_flag0 stop, so B is the one of before the stage. Every minute: with an interval
+  # of 5 minutes the series would be stale between two evaluations
+  - name: catalog-rollout-baseline
+    interval: 1m
+    rules:
+      - record: search:latency_seconds:p95_baseline7d
+        expr: quantile_over_time(0.5, search:latency_seconds:p95_5m_flag0[7d])
+
+      # How much history B has, in hours (the rules of the group catalog-rollout are evaluated every 15 s). Under 168
+      # hours B is not the baseline of 7 days that the plan asks for
+      - record: search:latency_seconds:p95_baseline7d_hours
+        expr: count_over_time(search:latency_seconds:p95_5m_flag0[7d]) * 15 / 3600
+
+      - record: catalog:lookup_latency_seconds:p95_baseline7d
+        expr: quantile_over_time(0.5, catalog:lookup_latency_seconds:p95_5m_flag0[7d])

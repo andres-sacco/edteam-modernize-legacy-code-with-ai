@@ -1,0 +1,72 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api/flights
+  jetty:
+    threads:
+      max: 50
+      min: 10
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+spring:
+  application:
+    name: twa-flights-monolith
+  datasource:
+    url: "jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3320}/${DB_NAME:flights}?autoReconnect=true"
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:muppet}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+  flyway:
+    locations: classpath:db/migration
+  jpa:
+    open-in-view: false
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+
+connector:
+  provider-alpha:
+    host: ${PROVIDER_ALPHA_HOST:http://localhost:8585/rest/provider-alpha/1.0}
+    connectionTimeout: 5000 #MILLISECONDS
+    readTimeout: 5000 #MILLISECONDS
+  provider-beta:
+    host: ${PROVIDER_BETA_HOST:http://localhost:8585/rest/provider-beta/1.0}
+    connectionTimeout: 5000 #MILLISECONDS
+    readTimeout: 5000 #MILLISECONDS
+  provider-gamma:
+    host: ${PROVIDER_GAMMA_HOST:http://localhost:8585/rest/provider-gamma/1.0}
+    connectionTimeout: 5000 #MILLISECONDS
+    readTimeout: 5000 #MILLISECONDS
+
+catalog:
+  # LOCAL: the tables of the monolith (CatalogService). REMOTE: the catalog service (CatalogClient)
+  mode: ${CATALOG_MODE:LOCAL}
+  batch:
+    # true: one query (or one request) for all the cities of the validation and of each provider
+    enabled: ${CATALOG_BATCH_ENABLED:false}
+  cache:
+    # Cache of the cities in front of the catalog (local or remote). The unknown codes are not cached
+    enabled: ${CATALOG_CACHE_ENABLED:false}
+    ttl: ${CATALOG_CACHE_TTL:60s}
+    maximumSize: ${CATALOG_CACHE_MAXIMUM_SIZE:1000}
+  remote:
+    host: ${CATALOG_SERVICE_HOST:http://localhost:8081/api/catalog}
+    connectionTimeout: ${CATALOG_SERVICE_CONNECTION_TIMEOUT:500} #MILLISECONDS
+    readTimeout: ${CATALOG_SERVICE_READ_TIMEOUT:500} #MILLISECONDS
+
+pricing:
+  api-key: ${PRICING_API_KEY:twa-pricing-local-key}
+
+jobs:
+  cluster-search-cleanup:
+    fixed-delay: 60000 #MILLISECONDS

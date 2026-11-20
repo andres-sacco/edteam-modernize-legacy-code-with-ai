@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(mvn *)",
+      "Bash(make start-infra)",
+      "Bash(make stop-infra)",
+      "Bash(docker compose *)",
+      "Bash(docker logs *)",
+      "Bash(docker ps *)",
+      "Bash(./scripts/smoke-test.sh)",
+      "Bash(./scripts/smoke-test.sh *)",
+      "Bash(python3 microcks/generate-contracts.py)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)"
+    ],
+    "deny": [
+      "Read(**/NOTAS-INSTRUCTOR.md)",
+      "Bash(git push *)",
+      "Bash(docker compose down -v *)",
+      "Bash(rm -rf *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,63 @@
+server:
+  port: ${SERVER_PORT:8081}
+  servlet:
+    context-path: /api/catalog
+  jetty:
+    threads:
+      max: ${SERVER_THREADS_MAX:50}
+      min: ${SERVER_THREADS_MIN:10}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+spring:
+  application:
+    name: twa-flights-catalog
+  datasource:
+    # Same database of the monolith (Strangler with a shared database, ADR-002 D2) with a read-only user
+    url: "jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3320}/${DB_NAME:flights}?autoReconnect=true"
+    # Without a default password: the service does not start without DB_PASSWORD
+    username: ${DB_USER:catalog_reader}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      # Queries by code over a few rows: a small pool, the MySQL is shared with the monolith
+      maximum-pool-size: ${DB_POOL_SIZE:5}
+      read-only: true
+  flyway:
+    # The schema of flights is migrated by the monolith. The own database of the service (catalog) is migrated by
+    # CatalogCopyConfiguration, with its own datasource
+    enabled: false
+  jpa:
+    open-in-view: false
+    show-sql: false
+    hibernate:
+      # The monolith owns the schema (Flyway) until the service has its own database
+      ddl-auto: validate
+
+catalog:
+  cities:
+    # Maximum number of codes in GET /cities?codes=
+    max-codes: ${CATALOG_MAX_CODES:50}
+  # Copy of the catalog in the own database of the service (M2 C2, ADR-002 D2). The publisher applies the events of
+  # flights.catalog_outbox. The reads of the service do not change: they are still from flights
+  copy:
+    enabled: ${CATALOG_COPY_ENABLED:false}
+    datasource:
+      url: "jdbc:mysql://${CATALOG_COPY_DB_HOST:${DB_HOST:localhost}}:${CATALOG_COPY_DB_PORT:${DB_PORT:3320}}/${CATALOG_COPY_DB_NAME:catalog}?autoReconnect=true"
+      username: ${CATALOG_COPY_DB_USER:catalog_writer}
+      # Without a default password, like the datasource of flights
+      password: ${CATALOG_COPY_DB_PASSWORD:}
+      maximum-pool-size: ${CATALOG_COPY_DB_POOL_SIZE:2}
+    publisher:
+      # Time between two runs, after the end of the previous one
+      fixed-delay-ms: ${CATALOG_COPY_PUBLISHER_DELAY_MS:1000}
+      # The events younger than this are published in the next run (an insert that commits later can have a lower id)
+      settle-ms: ${CATALOG_COPY_PUBLISHER_SETTLE_MS:2000}
+      batch-size: ${CATALOG_COPY_PUBLISHER_BATCH_SIZE:100}

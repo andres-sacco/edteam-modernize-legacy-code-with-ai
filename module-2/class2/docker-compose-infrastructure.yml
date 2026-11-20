@@ -1,0 +1,52 @@
+services:
+  flights-db:
+    container_name: flights-db
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'flights'
+      MYSQL_ROOT_PASSWORD: 'muppet'
+      CATALOG_DB_USER: 'catalog_reader'
+      # Random password in .env (ignored by git), created by ./scripts/init-env.sh
+      CATALOG_DB_PASSWORD: ${CATALOG_DB_PASSWORD:?Run ./scripts/init-env.sh to create .env}
+      # Owner of the own database of the catalog service (M2 C2), also in .env
+      CATALOG_COPY_DB_PASSWORD: ${CATALOG_COPY_DB_PASSWORD:?Run ./scripts/init-env.sh to add it to .env}
+    ports:
+      - 3320:3306
+    volumes:
+      # Read-only user of the catalog service and database catalog with its user (only when the database is created)
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+
+  # SELECT over continent, country and city for the user of the catalog, when Flyway of the monolith creates them
+  catalog-db-grants:
+    container_name: catalog-db-grants
+    image: mysql:8.0
+    environment:
+      MYSQL_HOST: flights-db
+      MYSQL_DATABASE: 'flights'
+      MYSQL_ROOT_PASSWORD: 'muppet'
+      CATALOG_DB_USER: 'catalog_reader'
+    volumes:
+      - ./docker/mysql/grants:/grants:ro
+    entrypoint: ["bash", "/grants/grant-catalog-reader.sh"]
+    restart: on-failure
+    depends_on:
+      - flights-db
+
+  microcks:
+    container_name: microcks
+    image: quay.io/microcks/microcks-uber:1.12.1
+    restart: always
+    ports:
+      - 8585:8080
+
+  microcks-importer:
+    container_name: microcks-importer
+    image: curlimages/curl:8.10.1
+    environment:
+      MICROCKS_URL: http://microcks:8080
+    volumes:
+      - ./microcks:/artifacts:ro
+    entrypoint: ["/bin/sh", "/artifacts/import-artifacts.sh"]
+    depends_on:
+      - microcks

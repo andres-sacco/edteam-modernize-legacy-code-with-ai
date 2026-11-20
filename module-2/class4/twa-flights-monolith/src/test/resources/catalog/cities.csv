@@ -1,0 +1,87 @@
+code;name;time_zone;country;continent
+AKL;Auckland;Pacific/Auckland;NZ;OC
+AMS;Amsterdam;Europe/Amsterdam;NL;EU
+ASU;Asuncion;America/Asuncion;PY;SA
+ATH;Athens;Europe/Athens;GR;EU
+BCN;Barcelona;Europe/Madrid;ES;EU
+BER;Berlin;Europe/Berlin;DE;EU
+BJS;Beijing;Asia/Shanghai;CN;AS
+BKK;Bangkok;Asia/Hong_Kong;TH;AS
+BNE;Brisbane;Australia/Brisbane;AU;OC
+BOG;Bogota;America/Bogota;CO;SA
+BOM;Mumbai;Asia/Kolkata;IN;AS
+BRC;Bariloche;America/Argentina/Salta;AR;SA
+BRU;Brussels;Europe/Brussels;BE;EU
+BUE;Buenos Aires;America/Argentina/Buenos_Aires;AR;SA
+CAI;Cairo;Africa/Cairo;EG;AF
+CAS;Casablanca;Africa/Casablanca;MA;AF
+CCS;Caracas;America/Caracas;VE;SA
+CHI;Chicago;America/Chicago;US;NA
+COR;Cordoba;America/Argentina/Cordoba;AR;SA
+CPH;Copenhagen;Europe/Copenhagen;DK;EU
+CPT;Cape Town;Africa/Johannesburg;ZA;AF
+CTG;Cartagena;America/Bogota;CO;SA
+CUN;Cancun;America/Cancun;MX;NA
+DEL;Delhi;Asia/Kolkata;IN;AS
+DOH;Doha;Asia/Qatar;QA;AS
+DUB;Dublin;Europe/Dublin;IE;EU
+DXB;Dubai;Asia/Dubai;AE;AS
+FLN;Florianopolis;America/Sao_Paulo;BR;SA
+FRA;Frankfurt;Europe/Berlin;DE;EU
+HAV;Havana;America/Havana;CU;NA
+HKG;Hong Kong;Asia/Hong_Kong;HK;AS
+IST;Istanbul;Europe/Istanbul;TR;AS
+JNB;Johannesburg;Africa/Johannesburg;ZA;AF
+KUL;Kuala Lumpur;Asia/Kuala_Lumpur;MY;AS
+LAS;Las Vegas;America/Los_Angeles;US;NA
+LAX;Los Angeles;America/Los_Angeles;US;NA
+LIM;Lima;America/Lima;PE;SA
+LIS;Lisbon;Europe/Lisbon;PT;EU
+LON;London;Europe/London;GB;EU
+LOS;Lagos;Africa/Lagos;NG;AF
+LPB;La Paz;America/La_Paz;BO;SA
+MAD;Madrid;Europe/Madrid;ES;EU
+MAN;Manila;Asia/Manila;PH;AS
+MDE;Medellin;America/Bogota;CO;SA
+MDZ;Mendoza;America/Argentina/Mendoza;AR;SA
+MEL;Melboure;Australia/Melbourne;AU;OC
+MEX;Mexico City;America/Mexico_City;MX;NA
+MIA;Miami;America/New_York;US;NA
+MIL;Milan;Europe/Rome;IT;EU
+MOS;Moscow;Europe/Moscow;RU;EU
+MUC;Munich;Europe/Berlin;DE;EU
+MVD;Montevideo;America/Montevideo;UY;SA
+NBO;Nairobi;Africa/Nairobi;KE;AF
+NYC;New York;America/New_York;US;NA
+ORL;Orlando;America/New_York;US;NA
+OSA;Osaka;Asia/Tokyo;JP;AS
+OTP;Bucharest;Europe/Bucharest;RO;EU
+PAR;Paris;Europe/Paris;FR;EU
+PDP;Punta del Este;America/Montevideo;UY;SA
+PER;Perth;Australia/Perth;AU;OC
+PRG;Prague;Europe/Prague;CZ;EU
+PTY;Panama City;America/Panama;PA;NA
+PUJ;Punta Cana;America/Santo_Domingo;DO;NA
+RIO;Rio de Janeiro;America/Sao_Paulo;BR;SA
+ROM;Rome;Europe/Rome;IT;EU
+SAO;Sao Paulo;America/Sao_Paulo;BR;SA
+SCL;Santiago;America/Santiago;CL;SA
+SEL;Seoul;Asia/Seoul;KR;AS
+SFO;San Francisco;America/Los_Angeles;US;NA
+SHA;Shanghai;Asia/Shanghai;CN;AS
+SIN;Singapore;Asia/Singapore;SG;AS
+SJO;San Jose;America/Costa_Rica;CR;NA
+SLA;Salta;America/Argentina/Salta;AR;SA
+SSA;Salvador;America/Bahia;BR;SA
+STO;Stockholm;Europe/Stockholm;SE;EU
+SYD;Sydney;Australia/Sydney;AU;OC
+TLV;Tel Aviv;Asia/Jerusalem;IL;AS
+TOK;Tokyo;Asia/Tokyo;JP;AS
+UIO;Quito;America/Guayaquil;EC;SA
+USH;Ushuaia;America/Argentina/Ushuaia;AR;SA
+VIE;Vienna;Europe/Vienna;AT;EU
+WAS;Washington;America/New_York;US;NA
+YMQ;Montreal;America/Toronto;CA;NA
+YTO;Toronto;America/Toronto;CA;NA
+YVR;Vancouver;America/Vancouver;CA;NA
+ZRH;Zurich;Europe/Zurich;CH;EU

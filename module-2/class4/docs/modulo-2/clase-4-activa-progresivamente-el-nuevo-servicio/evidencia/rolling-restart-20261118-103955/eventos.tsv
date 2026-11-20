@@ -1,0 +1,5 @@
+epoch	event
+1795009205.831948193	docker restart twa-flights-monolith-2
+1795009212.557856904	twa-flights-monolith-2 healthy
+1795009227.563237089	docker restart twa-flights-monolith
+1795009238.143647224	twa-flights-monolith healthy

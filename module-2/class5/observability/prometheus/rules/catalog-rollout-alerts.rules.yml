@@ -1,0 +1,195 @@
+# Alerts of the rollout of the catalog service (M2 C4). The table of alerts is in
+# docs/modulo-2/clase-4-activa-progresivamente-el-nuevo-servicio/plan-monitoreo-rollback.md and each alert has a
+# runbook in observability/runbooks/catalog-rollout.md.
+#   severity=page   → the user of the search is affected, or the rollback already happened: someone acts now.
+#   severity=ticket → the safety net of the rollout does not work (blind guard, no baseline): fix it before advancing.
+#   severity=info   → to review, does not notify.
+# A1, A2 and A3 (errors and mean of the remote path) are evaluated by CatalogRolloutGuard inside the monolith, every
+# 10 s, and roll back by themselves. Prometheus does not repeat them: it notifies the rollback (A6) and watches what
+# the guard does not see (A4, A5, the latency against the local path, a guard without traffic).
+groups:
+  - name: catalog-rollout-alerts
+    rules:
+      # A6. The guard rolled back. The counter catalog.rollout.rollbacks is created with the first rollback: its first
+      # sample (1) has no previous one and increase() does not see it. The second line catches that case
+      - alert: CatalogRolloutRolledBack
+        expr: |
+          increase(catalog_rollout_rollbacks_total{service="twa-flights-monolith"}[10m]) > 0
+          or
+          (
+            catalog_rollout_rollbacks_total{service="twa-flights-monolith"}
+            unless
+            catalog_rollout_rollbacks_total{service="twa-flights-monolith"} offset 10m
+          )
+        labels:
+          severity: page
+          team: flights
+        annotations:
+          summary: "El guard volvió el catálogo a 0 % remoto por {{ $labels.rule }} ({{ $labels.instance }})"
+          description: "El rollback ya se aplicó. No se vuelve a subir el porcentaje sin revisar la causa."
+          runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#catalogrolloutrolledback"
+          dashboard: "http://localhost:3000/d/catalog-rollout"
+
+      # A4. p95 of the search > B + 20 % in two windows of 5 minutes, while some calls go to the remote path
+      - alert: CatalogSearchLatency
+        expr: |
+          search:latency_seconds:p95_5m > on (service) 1.2 * search:latency_seconds:p95_baseline7d
+          and on (service)
+          catalog:rollout_remote_percentage:max > 0
+        for: 10m
+        labels:
+          severity: page
+          team: flights
+        annotations:
+          summary: "p95 de la búsqueda {{ $value | humanizeDuration }}: más de B + 20 % con el catálogo remoto encendido"
+          description: "Rollback manual: PUT /api/flights/catalog/rollout con remotePercentage=0."
+          runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#catalogsearchlatency"
+          dashboard: "http://localhost:3000/d/catalog-rollout"
+
+      # A5. 503 of the search > 0,5 % in two windows of 5 minutes (at least 0,1 searches per second)
+      - alert: CatalogUnavailable503
+        expr: |
+          search:unavailable:ratio_rate5m > 0.005
+          and on (service)
+          sum by (service) (search:requests:rate5m) > 0.1
+          and on (service)
+          catalog:rollout_remote_percentage:max > 0
+        for: 10m
+        labels:
+          severity: page
+          team: flights
+        annotations:
+          summary: "{{ $value | humanizePercentage }} de las búsquedas responden 503 con el catálogo remoto encendido"
+          description: "Rollback manual: PUT /api/flights/catalog/rollout con remotePercentage=0."
+          runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#catalogunavailable503"
+          dashboard: "http://localhost:3000/d/catalog-rollout"
+
+      # The degradation that A3 (mean > 50 ms, 14 times the base) does not see: p95 of the remote path more than 3
+      # times the one of the local path IN THE SAME WINDOW, and above 10 ms (the criterion of the mean of the plan),
+      # with at least 0,1 remote calls per second. The comparison ignores path, so the alert has only service. With 100 % remote there are no local calls: it compares against
+      # the local baseline of 7 days
+      - alert: CatalogRemoteLatencyVsLocal
+        expr: |
+          (
+            catalog:lookup_latency_seconds:p95_5m{path="remote"}
+            > ignoring (path) 3 *
+            (
+              (catalog:lookup_latency_seconds:p95_5m{path="local"} and catalog:lookup_calls:rate5m{path="local"} > 0.05)
+              or
+              catalog:lookup_latency_seconds:p95_baseline7d{path="local"}
+            )
+          )
+          and on (service) catalog:lookup_latency_seconds:p95_5m{path="remote"} > 0.010
+          and on (service) catalog:lookup_calls:rate5m{path="remote"} > 0.1
+        for: 5m
+        labels:
+          severity: page
+          team: flights
+        annotations:
+          summary: "p95 del catálogo remoto {{ $value | humanizeDuration }}: más de 3 veces el local en la misma ventana"
+          description: "Cada búsqueda hace varias llamadas al catálogo: la diferencia se multiplica. Rollback manual si sigue."
+          runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#catalogremotelatencyvslocal"
+          dashboard: "http://localhost:3000/d/catalog-rollout"
+
+      # The guard skips the windows with fewer than catalog.rollout.guard.min-calls remote calls. With the flag above
+      # 0 and that little traffic, A1-A3 are off and nobody rolls back. The rule comes from the gauges of the guard
+      # (catalog_rollout_guard_min_calls per catalog_rollout_guard_window_seconds), over 2 minutes (the range needs
+      # more than one sample). Without the gauges (guard disabled) the right side is empty and the alert fires too:
+      # without guard there is no automatic rollback. Per instance: each instance decides with its own traffic
+      - alert: CatalogRolloutGuardBlind
+        expr: |
+          catalog_rollout_remote_percentage{service="twa-flights-monolith"} > 0
+          unless on (service, instance)
+          (
+            sum by (service, instance) (increase(catalog_lookup_seconds_count{service="twa-flights-monolith", path="remote"}[2m]))
+            >= on (service, instance)
+            (catalog_rollout_guard_min_calls{service="twa-flights-monolith"} * 120 / catalog_rollout_guard_window_seconds{service="twa-flights-monolith"})
+          )
+        for: 5m
+        labels:
+          severity: ticket
+          team: flights
+        annotations:
+          summary: "El guard de {{ $labels.instance }} no evalúa: menos llamadas remotas que min-calls por ventana con el flag en {{ $value }} %"
+          description: "El rollback automático está apagado de hecho (o el guard está deshabilitado). Subir el porcentaje, bajar min-calls o volver a 0 %."
+          runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#catalogrolloutguardblind"
+          dashboard: "http://localhost:3000/d/catalog-rollout"
+
+      # Without B, A4 can not fire
+      - alert: CatalogRolloutBaselineMissing
+        expr: |
+          catalog:rollout_remote_percentage:max > 0
+          unless on (service)
+          search:latency_seconds:p95_baseline7d
+        for: 5m
+        labels:
+          severity: ticket
+          team: flights
+        annotations:
+          summary: "El catálogo remoto está encendido sin línea base B de la búsqueda: CatalogSearchLatency no puede disparar"
+          runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#catalogrolloutbaselinemissing"
+          dashboard: "http://localhost:3000/d/catalog-rollout"
+
+      - alert: CatalogRolloutBaselineShort
+        expr: |
+          search:latency_seconds:p95_baseline7d_hours < 168
+          and on (service)
+          catalog:rollout_remote_percentage:max > 0
+        labels:
+          severity: info
+          team: flights
+        annotations:
+          summary: "La línea base B tiene {{ $value | printf \"%.1f\" }} h de historia, no los 7 días del plan"
+          runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#catalogrolloutbaselinemissing"
+
+  - name: catalog-rollout-availability
+    rules:
+      - alert: TwaMonolithDown
+        expr: up{job="twa-flights-monolith"} == 0
+        for: 2m
+        labels:
+          severity: page
+          team: flights
+        annotations:
+          summary: "Prometheus no puede scrapear el monolito ({{ $labels.instance }})"
+          runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#twamonolithdown"
+
+      # dns_sd_configs without containers: there are no targets, and without this alert nothing else fires
+      - alert: TwaMonolithAbsent
+        expr: absent(up{job="twa-flights-monolith"})
+        for: 5m
+        labels:
+          severity: page
+          team: flights
+          service: twa-flights-monolith
+        annotations:
+          summary: "No hay ninguna instancia del monolito para scrapear"
+          runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#twamonolithdown"
+
+      # The catalog service down is a page only when it receives traffic; with 0 % it is a ticket
+      - alert: TwaCatalogServiceDown
+        expr: |
+          up{job="twa-flights-catalog"} == 0
+          and on ()
+          max(catalog_rollout_remote_percentage) > 0
+        for: 1m
+        labels:
+          severity: page
+          team: catalog
+        annotations:
+          summary: "El servicio de catálogo no responde con tráfico remoto encendido ({{ $labels.instance }})"
+          description: "El guard debería volver a 0 % en menos de 25 s: si no, CatalogRolloutRolledBack no llega y hay que hacerlo a mano."
+          runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#twacatalogservicedown"
+
+      - alert: TwaCatalogServiceDownNoTraffic
+        expr: |
+          up{job="twa-flights-catalog"} == 0
+          unless on ()
+          max(catalog_rollout_remote_percentage) > 0
+        for: 5m
+        labels:
+          severity: ticket
+          team: catalog
+        annotations:
+          summary: "El servicio de catálogo no responde ({{ $labels.instance }}); el flag está en 0 % y no afecta a la búsqueda"
+          runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#twacatalogservicedown"

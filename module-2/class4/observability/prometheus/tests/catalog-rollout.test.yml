@@ -1,0 +1,305 @@
+# Tests of the rules of the rollout of the catalog: make test-observability (promtool test rules)
+rule_files:
+  - ../rules/catalog-rollout.rules.yml
+  - ../rules/catalog-rollout-alerts.rules.yml
+
+evaluation_interval: 1m
+
+# The recordings before the alerts that read them
+group_eval_order:
+  - catalog-rollout
+  - catalog-rollout-baseline
+  - catalog-rollout-alerts
+  - catalog-rollout-availability
+
+tests:
+  # A6: the counter is born with the first rollback (no previous sample). It fires right away and stops 10 minutes later
+  - name: the first rollback of the guard is notified
+    interval: 1m
+    input_series:
+      - series: 'catalog_rollout_rollbacks_total{service="twa-flights-monolith", instance="a", rule="CatalogRemoteErrorsCritical"}'
+        values: "_x30 1x30"
+    alert_rule_test:
+      - eval_time: 31m
+        alertname: CatalogRolloutRolledBack
+        exp_alerts:
+          - exp_labels:
+              severity: page
+              team: flights
+              service: twa-flights-monolith
+              instance: a
+              rule: CatalogRemoteErrorsCritical
+            exp_annotations:
+              summary: "El guard volvió el catálogo a 0 % remoto por CatalogRemoteErrorsCritical (a)"
+              description: "El rollback ya se aplicó. No se vuelve a subir el porcentaje sin revisar la causa."
+              runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#catalogrolloutrolledback"
+              dashboard: "http://localhost:3000/d/catalog-rollout"
+      - eval_time: 45m
+        alertname: CatalogRolloutRolledBack
+        exp_alerts: []
+
+  # A second rollback, with the counter already created, is seen by increase()
+  - name: a later rollback is notified
+    interval: 1m
+    input_series:
+      - series: 'catalog_rollout_rollbacks_total{service="twa-flights-monolith", instance="a", rule="CatalogRemoteLatency"}'
+        values: "1x30 2x30"
+    alert_rule_test:
+      - eval_time: 33m
+        alertname: CatalogRolloutRolledBack
+        exp_alerts:
+          - exp_labels:
+              severity: page
+              team: flights
+              service: twa-flights-monolith
+              instance: a
+              rule: CatalogRemoteLatency
+            exp_annotations:
+              summary: "El guard volvió el catálogo a 0 % remoto por CatalogRemoteLatency (a)"
+              description: "El rollback ya se aplicó. No se vuelve a subir el porcentaje sin revisar la causa."
+              runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#catalogrolloutrolledback"
+              dashboard: "http://localhost:3000/d/catalog-rollout"
+
+  # A4: 60 minutes with the flag in 0 % (B ≈ 47,5 ms) and then a canary of 5 % where the p95 goes to ≈ 97,5 ms
+  - name: the search slower than B + 20 % during the canary pages
+    interval: 1m
+    input_series:
+      - series: 'catalog_rollout_remote_percentage{service="twa-flights-monolith", instance="a"}'
+        values: "0x60 5x60"
+      - series: 'http_server_requests_seconds_bucket{service="twa-flights-monolith", instance="a", uri="/clusters/itineraries", status="200", le="0.025"}'
+        values: "0+30x60 1800+0x60"
+      - series: 'http_server_requests_seconds_bucket{service="twa-flights-monolith", instance="a", uri="/clusters/itineraries", status="200", le="0.05"}'
+        values: "0+60x60 3600+0x60"
+      - series: 'http_server_requests_seconds_bucket{service="twa-flights-monolith", instance="a", uri="/clusters/itineraries", status="200", le="0.1"}'
+        values: "0+60x120"
+      - series: 'http_server_requests_seconds_bucket{service="twa-flights-monolith", instance="a", uri="/clusters/itineraries", status="200", le="+Inf"}'
+        values: "0+60x120"
+      - series: 'http_server_requests_seconds_count{service="twa-flights-monolith", instance="a", uri="/clusters/itineraries", status="200"}'
+        values: "0+60x120"
+    promql_expr_test:
+      # B: the median of the p95 of 5 minutes with the flag in 0 %
+      - expr: search:latency_seconds:p95_baseline7d
+        eval_time: 59m
+        exp_samples:
+          - labels: 'search:latency_seconds:p95_baseline7d{service="twa-flights-monolith"}'
+            value: 0.0475
+    alert_rule_test:
+      - eval_time: 59m
+        alertname: CatalogSearchLatency
+        exp_alerts: []
+      - eval_time: 85m
+        alertname: CatalogSearchLatency
+        exp_alerts:
+          - exp_labels:
+              severity: page
+              team: flights
+              service: twa-flights-monolith
+            exp_annotations:
+              summary: "p95 de la búsqueda 97.5ms: más de B + 20 % con el catálogo remoto encendido"
+              description: "Rollback manual: PUT /api/flights/catalog/rollout con remotePercentage=0."
+              runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#catalogsearchlatency"
+              dashboard: "http://localhost:3000/d/catalog-rollout"
+
+  # A5: 5 % of 503 during the canary
+  - name: the 503 of the search during the canary page
+    interval: 1m
+    input_series:
+      - series: 'catalog_rollout_remote_percentage{service="twa-flights-monolith", instance="a"}'
+        values: "5x30"
+      - series: 'http_server_requests_seconds_count{service="twa-flights-monolith", instance="a", uri="/clusters/itineraries", status="200"}'
+        values: "0+95x30"
+      - series: 'http_server_requests_seconds_count{service="twa-flights-monolith", instance="a", uri="/clusters/itineraries", status="503"}'
+        values: "0+5x30"
+    alert_rule_test:
+      - eval_time: 25m
+        alertname: CatalogUnavailable503
+        exp_alerts:
+          - exp_labels:
+              severity: page
+              team: flights
+              service: twa-flights-monolith
+            exp_annotations:
+              summary: "5% de las búsquedas responden 503 con el catálogo remoto encendido"
+              description: "Rollback manual: PUT /api/flights/catalog/rollout con remotePercentage=0."
+              runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#catalogunavailable503"
+              dashboard: "http://localhost:3000/d/catalog-rollout"
+
+  # Same 503 with the flag in 0 %: it is not a problem of the rollout
+  - name: the 503 with the flag in 0 % are not an alert of the rollout
+    interval: 1m
+    input_series:
+      - series: 'catalog_rollout_remote_percentage{service="twa-flights-monolith", instance="a"}'
+        values: "0x30"
+      - series: 'http_server_requests_seconds_count{service="twa-flights-monolith", instance="a", uri="/clusters/itineraries", status="200"}'
+        values: "0+95x30"
+      - series: 'http_server_requests_seconds_count{service="twa-flights-monolith", instance="a", uri="/clusters/itineraries", status="503"}'
+        values: "0+5x30"
+    alert_rule_test:
+      - eval_time: 25m
+        alertname: CatalogUnavailable503
+        exp_alerts: []
+
+  # The degradation that A3 does not see: remote p95 ≈ 48,8 ms (under the 50 ms of A3) against a local p95 ≈ 1 ms in
+  # the same window
+  - name: the remote path 3 times slower than the local one in the same window pages
+    interval: 1m
+    input_series:
+      - series: 'catalog_lookup_seconds_bucket{service="twa-flights-monolith", instance="a", path="local", operation="single", result="found", le="0.001"}'
+        values: "0+100x30"
+      - series: 'catalog_lookup_seconds_bucket{service="twa-flights-monolith", instance="a", path="local", operation="single", result="found", le="0.025"}'
+        values: "0+100x30"
+      - series: 'catalog_lookup_seconds_bucket{service="twa-flights-monolith", instance="a", path="local", operation="single", result="found", le="0.05"}'
+        values: "0+100x30"
+      - series: 'catalog_lookup_seconds_bucket{service="twa-flights-monolith", instance="a", path="local", operation="single", result="found", le="+Inf"}'
+        values: "0+100x30"
+      - series: 'catalog_lookup_seconds_count{service="twa-flights-monolith", instance="a", path="local", operation="single", result="found"}'
+        values: "0+100x30"
+      - series: 'catalog_lookup_seconds_bucket{service="twa-flights-monolith", instance="a", path="remote", operation="single", result="found", le="0.001"}'
+        values: "0x30"
+      - series: 'catalog_lookup_seconds_bucket{service="twa-flights-monolith", instance="a", path="remote", operation="single", result="found", le="0.025"}'
+        values: "0x30"
+      - series: 'catalog_lookup_seconds_bucket{service="twa-flights-monolith", instance="a", path="remote", operation="single", result="found", le="0.05"}'
+        values: "0+20x30"
+      - series: 'catalog_lookup_seconds_bucket{service="twa-flights-monolith", instance="a", path="remote", operation="single", result="found", le="+Inf"}'
+        values: "0+20x30"
+      - series: 'catalog_lookup_seconds_count{service="twa-flights-monolith", instance="a", path="remote", operation="single", result="found"}'
+        values: "0+20x30"
+    promql_expr_test:
+      # Without errors the ratio is 0, not "no data"
+      - expr: catalog:lookup_error:ratio_rate5m{path="remote"}
+        eval_time: 10m
+        exp_samples:
+          - labels: 'catalog:lookup_error:ratio_rate5m{service="twa-flights-monolith", path="remote"}'
+            value: 0
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: CatalogRemoteLatencyVsLocal
+        exp_alerts:
+          - exp_labels:
+              severity: page
+              team: flights
+              service: twa-flights-monolith
+            exp_annotations:
+              summary: "p95 del catálogo remoto 48.75ms: más de 3 veces el local en la misma ventana"
+              description: "Cada búsqueda hace varias llamadas al catálogo: la diferencia se multiplica. Rollback manual si sigue."
+              runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#catalogremotelatencyvslocal"
+              dashboard: "http://localhost:3000/d/catalog-rollout"
+
+  # Remote p95 ≈ 4,8 ms is 3 times the local one (≈ 1 ms), but a remote path under 10 ms (the criterion of the mean
+  # of the plan) is not an alert
+  - name: a remote path under 10 ms is not an alert
+    interval: 1m
+    input_series:
+      - series: 'catalog_lookup_seconds_bucket{service="twa-flights-monolith", instance="a", path="local", operation="single", result="found", le="0.001"}'
+        values: "0+100x30"
+      - series: 'catalog_lookup_seconds_bucket{service="twa-flights-monolith", instance="a", path="local", operation="single", result="found", le="0.005"}'
+        values: "0+100x30"
+      - series: 'catalog_lookup_seconds_bucket{service="twa-flights-monolith", instance="a", path="local", operation="single", result="found", le="+Inf"}'
+        values: "0+100x30"
+      - series: 'catalog_lookup_seconds_count{service="twa-flights-monolith", instance="a", path="local", operation="single", result="found"}'
+        values: "0+100x30"
+      - series: 'catalog_lookup_seconds_bucket{service="twa-flights-monolith", instance="a", path="remote", operation="single", result="found", le="0.001"}'
+        values: "0x30"
+      - series: 'catalog_lookup_seconds_bucket{service="twa-flights-monolith", instance="a", path="remote", operation="single", result="found", le="0.005"}'
+        values: "0+20x30"
+      - series: 'catalog_lookup_seconds_bucket{service="twa-flights-monolith", instance="a", path="remote", operation="single", result="found", le="+Inf"}'
+        values: "0+20x30"
+      - series: 'catalog_lookup_seconds_count{service="twa-flights-monolith", instance="a", path="remote", operation="single", result="found"}'
+        values: "0+20x30"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: CatalogRemoteLatencyVsLocal
+        exp_alerts: []
+
+  # Guard of 10 calls per window of 10 s (60 per minute). Instance a has 10 remote calls per minute: blind. Instance
+  # b has 100: it evaluates. Instance c has traffic but no guard (no gauges): blind too
+  - name: a guard without enough remote calls is reported per instance
+    interval: 1m
+    input_series:
+      - series: 'catalog_rollout_guard_min_calls{service="twa-flights-monolith", instance="a"}'
+        values: "10x20"
+      - series: 'catalog_rollout_guard_window_seconds{service="twa-flights-monolith", instance="a"}'
+        values: "10x20"
+      - series: 'catalog_rollout_guard_min_calls{service="twa-flights-monolith", instance="b"}'
+        values: "10x20"
+      - series: 'catalog_rollout_guard_window_seconds{service="twa-flights-monolith", instance="b"}'
+        values: "10x20"
+      - series: 'catalog_rollout_remote_percentage{service="twa-flights-monolith", instance="c"}'
+        values: "5x20"
+      - series: 'catalog_lookup_seconds_count{service="twa-flights-monolith", instance="c", path="remote", operation="single", result="found"}'
+        values: "0+100x20"
+      - series: 'catalog_rollout_remote_percentage{service="twa-flights-monolith", instance="a"}'
+        values: "5x20"
+      - series: 'catalog_rollout_remote_percentage{service="twa-flights-monolith", instance="b"}'
+        values: "5x20"
+      - series: 'catalog_lookup_seconds_count{service="twa-flights-monolith", instance="a", path="remote", operation="single", result="found"}'
+        values: "0+10x20"
+      - series: 'catalog_lookup_seconds_count{service="twa-flights-monolith", instance="b", path="remote", operation="single", result="found"}'
+        values: "0+100x20"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: CatalogRolloutGuardBlind
+        exp_alerts:
+          - exp_labels:
+              severity: ticket
+              team: flights
+              service: twa-flights-monolith
+              instance: a
+            exp_annotations:
+              summary: "El guard de a no evalúa: menos llamadas remotas que min-calls por ventana con el flag en 5 %"
+              description: "El rollback automático está apagado de hecho (o el guard está deshabilitado). Subir el porcentaje, bajar min-calls o volver a 0 %."
+              runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#catalogrolloutguardblind"
+              dashboard: "http://localhost:3000/d/catalog-rollout"
+          - exp_labels:
+              severity: ticket
+              team: flights
+              service: twa-flights-monolith
+              instance: c
+            exp_annotations:
+              summary: "El guard de c no evalúa: menos llamadas remotas que min-calls por ventana con el flag en 5 %"
+              description: "El rollback automático está apagado de hecho (o el guard está deshabilitado). Subir el porcentaje, bajar min-calls o volver a 0 %."
+              runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#catalogrolloutguardblind"
+              dashboard: "http://localhost:3000/d/catalog-rollout"
+
+  # The flag goes up without any history with the flag in 0 %: there is no B and A4 can not fire
+  - name: a canary without baseline is reported
+    interval: 1m
+    input_series:
+      - series: 'catalog_rollout_remote_percentage{service="twa-flights-monolith", instance="a"}'
+        values: "5x20"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: CatalogRolloutBaselineMissing
+        exp_alerts:
+          - exp_labels:
+              severity: ticket
+              team: flights
+              service: twa-flights-monolith
+            exp_annotations:
+              summary: "El catálogo remoto está encendido sin línea base B de la búsqueda: CatalogSearchLatency no puede disparar"
+              runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#catalogrolloutbaselinemissing"
+              dashboard: "http://localhost:3000/d/catalog-rollout"
+
+  # The catalog service down is a page only with remote traffic
+  - name: the catalog service down pages only with the flag above 0 %
+    interval: 1m
+    input_series:
+      - series: 'up{job="twa-flights-catalog", instance="c"}'
+        values: "0x20"
+      - series: 'catalog_rollout_remote_percentage{service="twa-flights-monolith", instance="a"}'
+        values: "0x20"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: TwaCatalogServiceDown
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: TwaCatalogServiceDownNoTraffic
+        exp_alerts:
+          - exp_labels:
+              severity: ticket
+              team: catalog
+              job: twa-flights-catalog
+              instance: c
+            exp_annotations:
+              summary: "El servicio de catálogo no responde (c); el flag está en 0 % y no afecta a la búsqueda"
+              runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/catalog-rollout.md#twacatalogservicedown"

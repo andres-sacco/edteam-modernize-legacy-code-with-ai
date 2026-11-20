@@ -1,0 +1,57 @@
+# Recording rules of the parity between the paths of the catalog (M2 C5): the rate of 40014 of the search and the rate
+# of itineraries discarded by provider, by the path of the catalog that answered (local, remote, replica, cache or
+# mixed). The criteria of the stages compare these rates with the control (40014 = control ± 0.1 pp, discards =
+# control ± 0.5 pp, plan-de-extraccion.md). They are recording rules only: the thresholds need a baseline first.
+#
+# Metrics of the monolith (Micrometer → /actuator/prometheus):
+#   search_catalog_outcome_total{outcome=ok|not_found_40014|unavailable_503, path}   validation of the cities
+#   provider_itineraries_received_total{provider, path}                               itineraries of each provider
+#   provider_itineraries_discarded_total{provider, path, reason}                      itineraries discarded
+groups:
+  - name: catalog-parity
+    rules:
+      # Without a 40014 there is no series of that outcome: "or 0 * ..." keeps the ratio in 0 instead of no data
+      - record: search:catalog_not_found:ratio_rate1h
+        expr: |
+          (
+            sum by (service, path) (rate(search_catalog_outcome_total{service="twa-flights-monolith", outcome="not_found_40014"}[1h]))
+            or
+            0 * sum by (service, path) (rate(search_catalog_outcome_total{service="twa-flights-monolith"}[1h]))
+          )
+          /
+          sum by (service, path) (rate(search_catalog_outcome_total{service="twa-flights-monolith"}[1h]))
+
+      - record: search:catalog_unavailable:ratio_rate1h
+        expr: |
+          (
+            sum by (service, path) (rate(search_catalog_outcome_total{service="twa-flights-monolith", outcome="unavailable_503"}[1h]))
+            or
+            0 * sum by (service, path) (rate(search_catalog_outcome_total{service="twa-flights-monolith"}[1h]))
+          )
+          /
+          sum by (service, path) (rate(search_catalog_outcome_total{service="twa-flights-monolith"}[1h]))
+
+      - record: provider:itineraries_discarded:ratio_rate1h
+        expr: |
+          (
+            sum by (service, provider, path) (rate(provider_itineraries_discarded_total{service="twa-flights-monolith"}[1h]))
+            or
+            0 * sum by (service, provider, path) (rate(provider_itineraries_received_total{service="twa-flights-monolith"}[1h]))
+          )
+          /
+          sum by (service, provider, path) (rate(provider_itineraries_received_total{service="twa-flights-monolith"}[1h]))
+
+      # The drift of each path against the local one (the control while it exists), in percentage points
+      - record: search:catalog_not_found:drift_vs_local_pp
+        expr: |
+          100 * (
+            search:catalog_not_found:ratio_rate1h{path!="local"}
+            - ignoring(path) group_left search:catalog_not_found:ratio_rate1h{path="local"}
+          )
+
+      - record: provider:itineraries_discarded:drift_vs_local_pp
+        expr: |
+          100 * (
+            provider:itineraries_discarded:ratio_rate1h{path!="local"}
+            - ignoring(path) group_left provider:itineraries_discarded:ratio_rate1h{path="local"}
+          )

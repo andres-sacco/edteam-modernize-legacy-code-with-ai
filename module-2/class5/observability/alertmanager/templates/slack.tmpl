@@ -1,0 +1,11 @@
+{{ define "slack.twa.title" -}}
+[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} · {{ .CommonLabels.service }}
+{{- end }}
+
+{{ define "slack.twa.text" -}}
+{{ range .Alerts -}}
+*{{ .Annotations.summary }}*
+{{ .Annotations.description }}
+{{ if .Annotations.runbook_url }}<{{ .Annotations.runbook_url }}|Runbook>{{ end }}{{ if .Annotations.dashboard }} · <{{ .Annotations.dashboard }}|Dashboard>{{ end }}
+{{ end -}}
+{{- end }}

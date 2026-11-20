@@ -1,0 +1,188 @@
+services:
+  flights-db:
+    container_name: flights-db
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'flights'
+      MYSQL_ROOT_PASSWORD: 'muppet'
+      CATALOG_DB_USER: 'catalog_reader'
+      # Random password in .env (ignored by git), created by ./scripts/init-env.sh
+      CATALOG_DB_PASSWORD: ${CATALOG_DB_PASSWORD:?Run ./scripts/init-env.sh to create .env}
+      # Owner of the own database of the catalog service (M2 C2), also in .env
+      CATALOG_COPY_DB_PASSWORD: ${CATALOG_COPY_DB_PASSWORD:?Run ./scripts/init-env.sh to add it to .env}
+    ports:
+      - 3320:3306
+    volumes:
+      # Read-only user of the catalog service and database catalog with its user (only when the database is created)
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pmuppet"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # SELECT over continent, country and city for the user of the catalog, when Flyway of the monolith creates them
+  catalog-db-grants:
+    container_name: catalog-db-grants
+    image: mysql:8.0
+    environment:
+      MYSQL_HOST: flights-db
+      MYSQL_DATABASE: 'flights'
+      MYSQL_ROOT_PASSWORD: 'muppet'
+      CATALOG_DB_USER: 'catalog_reader'
+    volumes:
+      - ./docker/mysql/grants:/grants:ro
+    entrypoint: ["bash", "/grants/grant-catalog-reader.sh"]
+    depends_on:
+      flights-db:
+        condition: service_healthy
+
+  # Broker of the events between the services (M2 C3): the catalog publishes CiudadActualizada, the monolith
+  # consumes it. Console in http://localhost:15672 (user twa, password RABBITMQ_PASSWORD of .env)
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3.13-management
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: twa
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Run ./scripts/init-env.sh to add it to .env}
+    ports:
+      - 5672:5672
+      - 15672:15672
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  microcks:
+    container_name: microcks
+    image: quay.io/microcks/microcks-uber:1.12.1
+    restart: always
+    ports:
+      - 8585:8080
+
+  microcks-importer:
+    container_name: microcks-importer
+    image: curlimages/curl:8.10.1
+    environment:
+      MICROCKS_URL: http://microcks:8080
+    volumes:
+      - ./microcks:/artifacts:ro
+    entrypoint: ["/bin/sh", "/artifacts/import-artifacts.sh"]
+    depends_on:
+      - microcks
+
+  # Two instances of the monolith behind flights-lb (prerequisite P1 of the extraction plan): a restart of one of them
+  # is not downtime, and the rollback by flag is tested with 2 instances that read the same table. The first one keeps
+  # the name twa-flights-monolith (and runs Flyway); the second one starts when the first one is healthy
+  twa-flights-monolith:
+    build: ./twa-flights-monolith
+    image: twa-flights-monolith:local
+    container_name: twa-flights-monolith
+    restart: always
+    environment: &monolith-environment
+      DB_HOST: flights-db
+      DB_PORT: 3306
+      PROVIDER_ALPHA_HOST: http://microcks:8080/rest/provider-alpha/1.0
+      PROVIDER_BETA_HOST: http://microcks:8080/rest/provider-beta/1.0
+      PROVIDER_GAMMA_HOST: http://microcks:8080/rest/provider-gamma/1.0
+      PRICING_API_KEY: twa-pricing-local-key
+      # The catalog service is deployed without traffic (stage 2 of the extraction plan). The canary (M2 C4) is not
+      # changed here: PUT /api/flights/catalog/rollout sets the remote percentage in runtime, catalog.mode is the value
+      # while the flag is NULL
+      CATALOG_MODE: LOCAL
+      CATALOG_ROLLOUT_API_KEY: twa-catalog-rollout-local-key
+      # Automatic rollback to 0 % remote (CatalogRolloutGuard), with the thresholds of application.yml
+      CATALOG_ROLLOUT_GUARD_ENABLED: 'true'
+      # Stages 1a and 1b of the extraction plan (M2 C4): one query (or one request) for all the cities, and the cache
+      # in front of both paths. They come before the canary. Rollback: false and restart
+      CATALOG_BATCH_ENABLED: ${CATALOG_BATCH_ENABLED:-true}
+      CATALOG_CACHE_ENABLED: ${CATALOG_CACHE_ENABLED:-true}
+      CATALOG_SERVICE_HOST: http://twa-flights-catalog:8081/api/catalog
+      # Consumes CiudadActualizada into the replica city_replica (M2 C3). Rollback: CATALOG_EVENTS_ENABLED=false
+      CATALOG_EVENTS_ENABLED: 'true'
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?Run ./scripts/init-env.sh to add it to .env}
+      # A stopped instance finishes the requests in progress (P1: a restart without 5xx)
+      SERVER_SHUTDOWN: graceful
+      SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE: 20s
+    healthcheck: &monolith-healthcheck
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/api/flights/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+    depends_on:
+      flights-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      microcks-importer:
+        condition: service_completed_successfully
+
+  # The same image of the first instance (built by it)
+  twa-flights-monolith-2:
+    image: twa-flights-monolith:local
+    container_name: twa-flights-monolith-2
+    pull_policy: never
+    restart: always
+    healthcheck: *monolith-healthcheck
+    environment:
+      <<: *monolith-environment
+      # Flyway already ran in the first instance
+      SPRING_FLYWAY_ENABLED: 'false'
+    depends_on:
+      twa-flights-monolith:
+        condition: service_healthy
+
+  # Load balancer of the monolith in http://localhost:8080 (P1). It resolves the instances by the DNS of Docker every 5
+  # s, and only retries in the other instance when the connection fails (never on a 503 of the application)
+  flights-lb:
+    container_name: flights-lb
+    image: nginx:1.28.0-alpine
+    restart: always
+    ports:
+      - 8080:8080
+    volumes:
+      - ./docker/nginx/flights-lb.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/api/flights/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    depends_on:
+      twa-flights-monolith:
+        condition: service_healthy
+      twa-flights-monolith-2:
+        condition: service_healthy
+
+  # Catalog of cities extracted from the monolith (M2 C1). It does not receive traffic yet (catalog.mode=local)
+  twa-flights-catalog:
+    build: ./twa-flights-catalog
+    container_name: twa-flights-catalog
+    ports:
+      - 8081:8081
+    restart: always
+    environment:
+      DB_HOST: flights-db
+      DB_PORT: 3306
+      DB_USER: catalog_reader
+      DB_PASSWORD: ${CATALOG_DB_PASSWORD:?Run ./scripts/init-env.sh to create .env}
+      # Copy of the catalog in its own database, kept by the publisher of flights.catalog_outbox (M2 C2). The reads
+      # are still from flights. Rollback: CATALOG_COPY_ENABLED=false
+      CATALOG_COPY_ENABLED: 'true'
+      CATALOG_COPY_DB_USER: catalog_writer
+      CATALOG_COPY_DB_PASSWORD: ${CATALOG_COPY_DB_PASSWORD:?Run ./scripts/init-env.sh to add it to .env}
+      # Publishes the changes of the cities as CiudadActualizada in RabbitMQ (M2 C3). Rollback: CATALOG_EVENTS_ENABLED=false
+      CATALOG_EVENTS_ENABLED: 'true'
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?Run ./scripts/init-env.sh to add it to .env}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      # The monolith creates the tables with Flyway, the service only validates them
+      twa-flights-monolith:
+        condition: service_healthy
+      catalog-db-grants:
+        condition: service_completed_successfully

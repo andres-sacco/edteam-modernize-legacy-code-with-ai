@@ -1,0 +1,148 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api/flights
+  jetty:
+    threads:
+      max: 50
+      min: 10
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # prometheus: scraped by the stack of observability (docker-compose.observability.yml, M2 C4)
+        include: health,info,metrics,prometheus
+  metrics:
+    distribution:
+      # p95 and p99 of the search in /actuator/metrics (M2 C4): the thresholds of the rollout of the catalog use them.
+      # catalog.lookup publishes its own percentiles (MeteredCatalogApi)
+      percentiles:
+        "[http.server.requests]": 0.95,0.99
+      # Buckets of the histogram in /actuator/prometheus: the percentiles above are calculated in each instance and
+      # can not be aggregated nor compared in the same window. With the buckets, Prometheus calculates the p95 of the
+      # search and of each path of the catalog (local and remote) over the same range (histogram_quantile)
+      percentiles-histogram:
+        "[http.server.requests]": true
+        "[catalog.lookup]": true
+      minimum-expected-value:
+        "[http.server.requests]": 1ms
+        "[catalog.lookup]": 100us
+      maximum-expected-value:
+        "[http.server.requests]": 10s
+        "[catalog.lookup]": 3s
+  health:
+    rabbit:
+      # The broker is part of the health only when the monolith consumes the events of the catalog
+      enabled: ${CATALOG_EVENTS_ENABLED:false}
+  endpoint:
+    health:
+      show-details: always
+
+spring:
+  application:
+    name: twa-flights-monolith
+  datasource:
+    url: "jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3320}/${DB_NAME:flights}?autoReconnect=true"
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:muppet}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:twa}
+    password: ${RABBITMQ_PASSWORD:}
+    listener:
+      simple:
+        # A failure of the database is retried 3 times, then the message goes to the dead letter queue
+        default-requeue-rejected: false
+        prefetch: 10
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 500ms
+  flyway:
+    locations: classpath:db/migration
+  jpa:
+    open-in-view: false
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+
+connector:
+  provider-alpha:
+    host: ${PROVIDER_ALPHA_HOST:http://localhost:8585/rest/provider-alpha/1.0}
+    connectionTimeout: 5000 #MILLISECONDS
+    readTimeout: 5000 #MILLISECONDS
+  provider-beta:
+    host: ${PROVIDER_BETA_HOST:http://localhost:8585/rest/provider-beta/1.0}
+    connectionTimeout: 5000 #MILLISECONDS
+    readTimeout: 5000 #MILLISECONDS
+  provider-gamma:
+    host: ${PROVIDER_GAMMA_HOST:http://localhost:8585/rest/provider-gamma/1.0}
+    connectionTimeout: 5000 #MILLISECONDS
+    readTimeout: 5000 #MILLISECONDS
+
+catalog:
+  # LOCAL: the tables of the monolith (CatalogService). REMOTE: the catalog service (CatalogClient). It is the value
+  # while catalog_rollout.remote_percentage is NULL: a percentage in that table (V1.14) has priority (M2 C4)
+  mode: ${CATALOG_MODE:LOCAL}
+  # The path of the calls that do not go to the catalog service, the destination of a rollback to 0 % (M2 C5). LOCAL:
+  # the tables of the monolith (CatalogService). REPLICA: the replica city_replica, kept by the events (needs
+  # catalog.events.enabled=true and a replica already filled)
+  fallback: ${CATALOG_FALLBACK:LOCAL}
+  rollout:
+    # How often each instance reads the flag catalog_rollout (MILLISECONDS): the time of a rollback by flag
+    refresh: ${CATALOG_ROLLOUT_REFRESH:5000}
+    # Header X-Api-Key of GET/PUT /catalog/rollout, the change of the flag without SQL (its own key, not the pricing one)
+    api-key: ${CATALOG_ROLLOUT_API_KEY:twa-catalog-rollout-local-key}
+    # Rollback rule (CatalogRolloutGuard): over the remote calls of each window it sets the flag to 0 % when the errors
+    # are > max-error-rate % in consecutive-windows windows or > critical-error-rate % in one (with at least
+    # critical-min-errors errors), or the mean is > max-mean-latency ms in consecutive-windows windows. Windows with
+    # fewer than min-calls remote calls are skipped. The window is short: while the service is down the users see 503
+    # until the rollback (there is no fallback by request, decision 1 of the extraction plan)
+    guard:
+      enabled: ${CATALOG_ROLLOUT_GUARD_ENABLED:true}
+      window: ${CATALOG_ROLLOUT_GUARD_WINDOW:10000} #MILLISECONDS
+      min-calls: ${CATALOG_ROLLOUT_GUARD_MIN_CALLS:10}
+      max-error-rate: ${CATALOG_ROLLOUT_GUARD_MAX_ERROR_RATE:0.5} #PERCENTAGE
+      critical-error-rate: ${CATALOG_ROLLOUT_GUARD_CRITICAL_ERROR_RATE:5.0} #PERCENTAGE
+      critical-min-errors: ${CATALOG_ROLLOUT_GUARD_CRITICAL_MIN_ERRORS:3}
+      max-mean-latency: ${CATALOG_ROLLOUT_GUARD_MAX_MEAN_LATENCY:50} #MILLISECONDS
+      # 6 windows of 10 s: the minute of "sustained" of the plan
+      consecutive-windows: ${CATALOG_ROLLOUT_GUARD_CONSECUTIVE_WINDOWS:6}
+  batch:
+    # true: one query (or one request) for all the cities of the validation and of each provider
+    enabled: ${CATALOG_BATCH_ENABLED:false}
+  cache:
+    # Cache of the cities in front of the catalog (local or remote). The unknown codes are not cached
+    enabled: ${CATALOG_CACHE_ENABLED:false}
+    ttl: ${CATALOG_CACHE_TTL:60s}
+    maximumSize: ${CATALOG_CACHE_MAXIMUM_SIZE:1000}
+  remote:
+    host: ${CATALOG_SERVICE_HOST:http://localhost:8081/api/catalog}
+    connectionTimeout: ${CATALOG_SERVICE_CONNECTION_TIMEOUT:500} #MILLISECONDS
+    readTimeout: ${CATALOG_SERVICE_READ_TIMEOUT:500} #MILLISECONDS
+    # Total attempts of each request (1 = without retries). Only the transient failures are retried: the service does
+    # not answer, a timeout, or a 502, 503 or 504. Worst time: maxAttempts * (connection + read timeout) + backoffs
+    maxAttempts: ${CATALOG_SERVICE_MAX_ATTEMPTS:2}
+    retryBackoff: ${CATALOG_SERVICE_RETRY_BACKOFF:100} #MILLISECONDS
+
+  # Events of the catalog service (M2 C3): CityUpdatedListener applies CiudadActualizada v1 to the replica city_replica
+  # (V1.13). The search reads the replica with catalog.fallback=REPLICA. Rollback: CATALOG_EVENTS_ENABLED=false, the
+  # events wait in the queue
+  events:
+    enabled: ${CATALOG_EVENTS_ENABLED:false}
+    exchange: ${CATALOG_EVENTS_EXCHANGE:catalog.events}
+    ciudad-actualizada:
+      routing-key: catalog.ciudad-actualizada.v1
+      queue: ${CATALOG_EVENTS_CITY_QUEUE:flights.catalog.ciudad-actualizada}
+
+pricing:
+  api-key: ${PRICING_API_KEY:twa-pricing-local-key}
+
+jobs:
+  cluster-search-cleanup:
+    fixed-delay: 60000 #MILLISECONDS

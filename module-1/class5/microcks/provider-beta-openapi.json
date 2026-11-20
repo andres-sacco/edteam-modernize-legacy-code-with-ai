@@ -1,0 +1,1911 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "provider-beta",
+    "version": "1.0",
+    "description": "Mock of the external flights provider Beta"
+  },
+  "paths": {
+    "/itineraries": {
+      "get": {
+        "operationId": "availability",
+        "summary": "Search the availability of flights",
+        "x-microcks-operation": {
+          "dispatcher": "SCRIPT",
+          "dispatcherRules": "def request = mockRequest.getRequest()\ndef origin = request.getParameter(\"origin\")\ndef destination = request.getParameter(\"destination\")\n// City used as connection, it can not be the origin or the destination\ndef hubs = ['PTY', 'LIM', 'SCL', 'MEX', 'SAO'].findAll { it != origin && it != destination }\ndef random = new Random()\nrequestContext.hub = hubs[random.nextInt(hubs.size())]\n// The same carrier is used in the itinerary and in the number of each flight\ndef carriers = ['AR', 'AA', 'DL', 'IB', 'FY', 'LA', 'AF', 'KL', 'JJ']\n(0..4).each { requestContext.put(\"carrier\" + it, carriers[random.nextInt(carriers.size())]) }\ndef cabin = (request.getParameter(\"cabin\") ?: \"ECONOMY\").toLowerCase().replace('_', '-')\nif (!(cabin in ['economy', 'premium-economy', 'business'])) {\n    cabin = 'economy'\n}\ndef trip = request.getParameter(\"returnDate\") ? \"round-trip\" : \"one-way\"\nreturn trip + \"-\" + cabin\n"
+        },
+        "parameters": [
+          {
+            "name": "origin",
+            "in": "query",
+            "required": true,
+            "description": "IATA code of the origin city",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "destination",
+            "in": "query",
+            "required": true,
+            "description": "IATA code of the destination city",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "departureDate",
+            "in": "query",
+            "required": true,
+            "description": "Departure date (yyyy-MM-dd)",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "returnDate",
+            "in": "query",
+            "required": false,
+            "description": "Return date (yyyy-MM-dd)",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "adults",
+            "in": "query",
+            "required": true,
+            "description": "Adults quantity",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "children",
+            "in": "query",
+            "required": false,
+            "description": "Children quantity",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "infants",
+            "in": "query",
+            "required": false,
+            "description": "Infants quantity",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cabin",
+            "in": "query",
+            "required": false,
+            "description": "Cabin class, by default ECONOMY",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ECONOMY",
+                "PREMIUM_ECONOMY",
+                "BUSINESS"
+              ]
+            }
+          },
+          {
+            "name": "amount",
+            "in": "query",
+            "required": false,
+            "description": "Maximum number of itineraries to return",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available itineraries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "flight_options": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "option_id": {
+                                "type": "string"
+                              },
+                              "marketing_carrier": {
+                                "type": "string"
+                              },
+                              "cabin": {
+                                "type": "string",
+                                "enum": [
+                                  "economy",
+                                  "premium_economy",
+                                  "business"
+                                ]
+                              },
+                              "bounds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "direction": {
+                                      "type": "string",
+                                      "enum": [
+                                        "OUTBOUND",
+                                        "INBOUND"
+                                      ]
+                                    },
+                                    "legs": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "dep_airport": {
+                                            "type": "string"
+                                          },
+                                          "arr_airport": {
+                                            "type": "string"
+                                          },
+                                          "dep_date": {
+                                            "type": "string"
+                                          },
+                                          "dep_time": {
+                                            "type": "string"
+                                          },
+                                          "arr_date": {
+                                            "type": "string"
+                                          },
+                                          "arr_time": {
+                                            "type": "string"
+                                          },
+                                          "flight_no": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "fare_breakdown": {
+                                "type": "object",
+                                "properties": {
+                                  "adult": {
+                                    "type": "object",
+                                    "properties": {
+                                      "base_fare_cents": {
+                                        "type": "string"
+                                      },
+                                      "tax_cents": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  "child": {
+                                    "type": "object",
+                                    "properties": {
+                                      "base_fare_cents": {
+                                        "type": "string"
+                                      },
+                                      "tax_cents": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  "infant": {
+                                    "type": "object",
+                                    "properties": {
+                                      "base_fare_cents": {
+                                        "type": "string"
+                                      },
+                                      "tax_cents": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "baggage_allowance": {
+                                "type": "object",
+                                "properties": {
+                                  "hand_pieces": {
+                                    "type": "string"
+                                  },
+                                  "hand_kg": {
+                                    "type": "string"
+                                  },
+                                  "checked_pieces": {
+                                    "type": "string"
+                                  },
+                                  "checked_kg": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "round-trip-economy": {
+                    "value": {
+                      "status": "OK",
+                      "data": {
+                        "flight_options": [
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier0 }}",
+                            "cabin": "economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier0 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              },
+                              {
+                                "direction": "INBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[destination] }}",
+                                    "arr_airport": "{{ request.params[origin] }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier0 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(10000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(8000,69900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(2000,19900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "8",
+                              "checked_pieces": "{{ randomValue(0,1) }}",
+                              "checked_kg": "23"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier1 }}",
+                            "cabin": "economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier1 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              },
+                              {
+                                "direction": "INBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[destination] }}",
+                                    "arr_airport": "{{ request.params[origin] }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier1 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(10000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(8000,69900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(2000,19900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "8",
+                              "checked_pieces": "{{ randomValue(0,1) }}",
+                              "checked_kg": "23"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier2 }}",
+                            "cabin": "economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier2 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              },
+                              {
+                                "direction": "INBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[destination] }}",
+                                    "arr_airport": "{{ request.params[origin] }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier2 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(10000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(8000,69900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(2000,19900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "8",
+                              "checked_pieces": "{{ randomValue(0,1) }}",
+                              "checked_kg": "23"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier3 }}",
+                            "cabin": "economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              },
+                              {
+                                "direction": "INBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[destination] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[origin] }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(10000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(8000,69900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(2000,19900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "8",
+                              "checked_pieces": "{{ randomValue(0,1) }}",
+                              "checked_kg": "23"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier4 }}",
+                            "cabin": "economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              },
+                              {
+                                "direction": "INBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[destination] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[origin] }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(10000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(8000,69900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(2000,19900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "8",
+                              "checked_pieces": "{{ randomValue(0,1) }}",
+                              "checked_kg": "23"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "round-trip-premium-economy": {
+                    "value": {
+                      "status": "OK",
+                      "data": {
+                        "flight_options": [
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier0 }}",
+                            "cabin": "premium_economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier0 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              },
+                              {
+                                "direction": "INBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[destination] }}",
+                                    "arr_airport": "{{ request.params[origin] }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier0 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(90000,179900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(70000,139900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(20000,39900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "10",
+                              "checked_pieces": "1",
+                              "checked_kg": "23"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier1 }}",
+                            "cabin": "premium_economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier1 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              },
+                              {
+                                "direction": "INBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[destination] }}",
+                                    "arr_airport": "{{ request.params[origin] }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier1 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(90000,179900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(70000,139900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(20000,39900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "10",
+                              "checked_pieces": "1",
+                              "checked_kg": "23"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier2 }}",
+                            "cabin": "premium_economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier2 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              },
+                              {
+                                "direction": "INBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[destination] }}",
+                                    "arr_airport": "{{ request.params[origin] }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier2 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(90000,179900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(70000,139900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(20000,39900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "10",
+                              "checked_pieces": "1",
+                              "checked_kg": "23"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier3 }}",
+                            "cabin": "premium_economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              },
+                              {
+                                "direction": "INBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[destination] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[origin] }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(90000,179900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(70000,139900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(20000,39900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "10",
+                              "checked_pieces": "1",
+                              "checked_kg": "23"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier4 }}",
+                            "cabin": "premium_economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              },
+                              {
+                                "direction": "INBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[destination] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[origin] }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(90000,179900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(70000,139900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(20000,39900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "10",
+                              "checked_pieces": "1",
+                              "checked_kg": "23"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "round-trip-business": {
+                    "value": {
+                      "status": "OK",
+                      "data": {
+                        "flight_options": [
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier0 }}",
+                            "cabin": "business",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier0 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              },
+                              {
+                                "direction": "INBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[destination] }}",
+                                    "arr_airport": "{{ request.params[origin] }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier0 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(200000,499900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(150000,399900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(40000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "12",
+                              "checked_pieces": "2",
+                              "checked_kg": "32"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier1 }}",
+                            "cabin": "business",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier1 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              },
+                              {
+                                "direction": "INBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[destination] }}",
+                                    "arr_airport": "{{ request.params[origin] }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier1 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(200000,499900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(150000,399900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(40000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "12",
+                              "checked_pieces": "2",
+                              "checked_kg": "32"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier2 }}",
+                            "cabin": "business",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier2 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              },
+                              {
+                                "direction": "INBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[destination] }}",
+                                    "arr_airport": "{{ request.params[origin] }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier2 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(200000,499900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(150000,399900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(40000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "12",
+                              "checked_pieces": "2",
+                              "checked_kg": "32"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier3 }}",
+                            "cabin": "business",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              },
+                              {
+                                "direction": "INBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[destination] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[origin] }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(200000,499900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(150000,399900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(40000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "12",
+                              "checked_pieces": "2",
+                              "checked_kg": "32"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier4 }}",
+                            "cabin": "business",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              },
+                              {
+                                "direction": "INBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[destination] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[origin] }}",
+                                    "dep_date": "{{ request.params[returnDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[returnDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(200000,499900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(150000,399900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(40000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "12",
+                              "checked_pieces": "2",
+                              "checked_kg": "32"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "one-way-economy": {
+                    "value": {
+                      "status": "OK",
+                      "data": {
+                        "flight_options": [
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier0 }}",
+                            "cabin": "economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier0 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(10000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(8000,69900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(2000,19900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "8",
+                              "checked_pieces": "{{ randomValue(0,1) }}",
+                              "checked_kg": "23"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier1 }}",
+                            "cabin": "economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier1 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(10000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(8000,69900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(2000,19900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "8",
+                              "checked_pieces": "{{ randomValue(0,1) }}",
+                              "checked_kg": "23"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier2 }}",
+                            "cabin": "economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier2 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(10000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(8000,69900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(2000,19900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "8",
+                              "checked_pieces": "{{ randomValue(0,1) }}",
+                              "checked_kg": "23"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier3 }}",
+                            "cabin": "economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(10000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(8000,69900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(2000,19900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "8",
+                              "checked_pieces": "{{ randomValue(0,1) }}",
+                              "checked_kg": "23"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier4 }}",
+                            "cabin": "economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(10000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(8000,69900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(2000,19900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "8",
+                              "checked_pieces": "{{ randomValue(0,1) }}",
+                              "checked_kg": "23"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "one-way-premium-economy": {
+                    "value": {
+                      "status": "OK",
+                      "data": {
+                        "flight_options": [
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier0 }}",
+                            "cabin": "premium_economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier0 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(90000,179900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(70000,139900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(20000,39900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "10",
+                              "checked_pieces": "1",
+                              "checked_kg": "23"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier1 }}",
+                            "cabin": "premium_economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier1 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(90000,179900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(70000,139900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(20000,39900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "10",
+                              "checked_pieces": "1",
+                              "checked_kg": "23"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier2 }}",
+                            "cabin": "premium_economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier2 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(90000,179900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(70000,139900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(20000,39900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "10",
+                              "checked_pieces": "1",
+                              "checked_kg": "23"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier3 }}",
+                            "cabin": "premium_economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(90000,179900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(70000,139900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(20000,39900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "10",
+                              "checked_pieces": "1",
+                              "checked_kg": "23"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier4 }}",
+                            "cabin": "premium_economy",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(90000,179900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(70000,139900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(20000,39900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "10",
+                              "checked_pieces": "1",
+                              "checked_kg": "23"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "one-way-business": {
+                    "value": {
+                      "status": "OK",
+                      "data": {
+                        "flight_options": [
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier0 }}",
+                            "cabin": "business",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier0 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(200000,499900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(150000,399900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(40000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "12",
+                              "checked_pieces": "2",
+                              "checked_kg": "32"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier1 }}",
+                            "cabin": "business",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier1 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(200000,499900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(150000,399900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(40000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "12",
+                              "checked_pieces": "2",
+                              "checked_kg": "32"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier2 }}",
+                            "cabin": "business",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07,08,09,10,11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(15,16,17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier2 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(200000,499900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(150000,399900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(40000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "12",
+                              "checked_pieces": "2",
+                              "checked_kg": "32"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier3 }}",
+                            "cabin": "business",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier3 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(200000,499900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(150000,399900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(40000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "12",
+                              "checked_pieces": "2",
+                              "checked_kg": "32"
+                            }
+                          },
+                          {
+                            "option_id": "{{ uuid() }}",
+                            "marketing_carrier": "{{ carrier4 }}",
+                            "cabin": "business",
+                            "bounds": [
+                              {
+                                "direction": "OUTBOUND",
+                                "legs": [
+                                  {
+                                    "dep_airport": "{{ request.params[origin] }}",
+                                    "arr_airport": "{{ hub }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(00,01,02,03,04,05,06,07) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(08,09,10) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  },
+                                  {
+                                    "dep_airport": "{{ hub }}",
+                                    "arr_airport": "{{ request.params[destination] }}",
+                                    "dep_date": "{{ request.params[departureDate] }}",
+                                    "dep_time": "{{ randomValue(11,12,13) }}:{{ randomValue(00,15,30,45) }}",
+                                    "arr_date": "{{ request.params[departureDate] }}",
+                                    "arr_time": "{{ randomValue(17,18,19,20,21,22,23) }}:{{ randomValue(00,15,30,45) }}",
+                                    "flight_no": "{{ carrier4 }}{{ randomInt(100,9999) }}"
+                                  }
+                                ]
+                              }
+                            ],
+                            "fare_breakdown": {
+                              "adult": {
+                                "base_fare_cents": "{{ randomInt(200000,499900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "child": {
+                                "base_fare_cents": "{{ randomInt(150000,399900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              },
+                              "infant": {
+                                "base_fare_cents": "{{ randomInt(40000,89900) }}",
+                                "tax_cents": "{{ randomInt(2000,24900) }}"
+                              }
+                            },
+                            "baggage_allowance": {
+                              "hand_pieces": "1",
+                              "hand_kg": "12",
+                              "checked_pieces": "2",
+                              "checked_kg": "32"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,103 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api/flights
+  jetty:
+    threads:
+      max: 50
+      min: 10
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  health:
+    rabbit:
+      # The broker is part of the health only when the monolith consumes the events of the catalog
+      enabled: ${CATALOG_EVENTS_ENABLED:false}
+  endpoint:
+    health:
+      show-details: always
+
+spring:
+  application:
+    name: twa-flights-monolith
+  datasource:
+    url: "jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3320}/${DB_NAME:flights}?autoReconnect=true"
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:muppet}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:twa}
+    password: ${RABBITMQ_PASSWORD:}
+    listener:
+      simple:
+        # A failure of the database is retried 3 times, then the message goes to the dead letter queue
+        default-requeue-rejected: false
+        prefetch: 10
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 500ms
+  flyway:
+    locations: classpath:db/migration
+  jpa:
+    open-in-view: false
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+
+connector:
+  provider-alpha:
+    host: ${PROVIDER_ALPHA_HOST:http://localhost:8585/rest/provider-alpha/1.0}
+    connectionTimeout: 5000 #MILLISECONDS
+    readTimeout: 5000 #MILLISECONDS
+  provider-beta:
+    host: ${PROVIDER_BETA_HOST:http://localhost:8585/rest/provider-beta/1.0}
+    connectionTimeout: 5000 #MILLISECONDS
+    readTimeout: 5000 #MILLISECONDS
+  provider-gamma:
+    host: ${PROVIDER_GAMMA_HOST:http://localhost:8585/rest/provider-gamma/1.0}
+    connectionTimeout: 5000 #MILLISECONDS
+    readTimeout: 5000 #MILLISECONDS
+
+catalog:
+  # LOCAL: the tables of the monolith (CatalogService). REMOTE: the catalog service (CatalogClient)
+  mode: ${CATALOG_MODE:LOCAL}
+  batch:
+    # true: one query (or one request) for all the cities of the validation and of each provider
+    enabled: ${CATALOG_BATCH_ENABLED:false}
+  cache:
+    # Cache of the cities in front of the catalog (local or remote). The unknown codes are not cached
+    enabled: ${CATALOG_CACHE_ENABLED:false}
+    ttl: ${CATALOG_CACHE_TTL:60s}
+    maximumSize: ${CATALOG_CACHE_MAXIMUM_SIZE:1000}
+  remote:
+    host: ${CATALOG_SERVICE_HOST:http://localhost:8081/api/catalog}
+    connectionTimeout: ${CATALOG_SERVICE_CONNECTION_TIMEOUT:500} #MILLISECONDS
+    readTimeout: ${CATALOG_SERVICE_READ_TIMEOUT:500} #MILLISECONDS
+    # Total attempts of each request (1 = without retries). Only the transient failures are retried: the service does
+    # not answer, a timeout, or a 502, 503 or 504. Worst time: maxAttempts * (connection + read timeout) + backoffs
+    maxAttempts: ${CATALOG_SERVICE_MAX_ATTEMPTS:2}
+    retryBackoff: ${CATALOG_SERVICE_RETRY_BACKOFF:100} #MILLISECONDS
+
+  # Events of the catalog service (M2 C3): CityUpdatedListener applies CiudadActualizada v1 to the replica city_replica
+  # (V1.13). The search does not read the replica yet. Rollback: CATALOG_EVENTS_ENABLED=false, the events wait in the queue
+  events:
+    enabled: ${CATALOG_EVENTS_ENABLED:false}
+    exchange: ${CATALOG_EVENTS_EXCHANGE:catalog.events}
+    ciudad-actualizada:
+      routing-key: catalog.ciudad-actualizada.v1
+      queue: ${CATALOG_EVENTS_CITY_QUEUE:flights.catalog.ciudad-actualizada}
+
+pricing:
+  api-key: ${PRICING_API_KEY:twa-pricing-local-key}
+
+jobs:
+  cluster-search-cleanup:
+    fixed-delay: 60000 #MILLISECONDS

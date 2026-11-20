@@ -1,0 +1,3535 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "twa-flights-catalog",
+    "version": "1.0",
+    "description": "Catalog of cities extracted from the monolith. Generated from the seed data of the catalog by microcks/generate-contracts.py. The mock of GET /cities answers one code at a time; the service accepts up to 50 codes separated by comma. The errors 400 and 503 have the format of Error (code, shortDescription, reasons). x-twa-client-retry tells how the monolith retries each operation"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8081/api/catalog",
+      "description": "Local (make run-catalog)"
+    },
+    {
+      "url": "http://twa-flights-catalog:8081/api/catalog",
+      "description": "docker compose"
+    }
+  ],
+  "paths": {
+    "/cities/{code}": {
+      "get": {
+        "operationId": "getCity",
+        "summary": "Get one city by its code",
+        "x-microcks-operation": {
+          "dispatcher": "FALLBACK",
+          "dispatcherRules": "{\"dispatcher\": \"URI_PARTS\", \"dispatcherRules\": \"code\", \"fallback\": \"unknown\"}"
+        },
+        "x-twa-client-retry": {
+          "timeouts": "connection and reading of catalog.remote (500 ms each by default)",
+          "maxAttempts": 2,
+          "backoffMillis": 100,
+          "retryOn": [
+            "I/O error or timeout",
+            502,
+            503,
+            504
+          ],
+          "doNotRetryOn": [
+            "4xx",
+            500,
+            "invalid body"
+          ]
+        },
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "AKL": {
+                "value": "AKL"
+              },
+              "AMS": {
+                "value": "AMS"
+              },
+              "ASU": {
+                "value": "ASU"
+              },
+              "ATH": {
+                "value": "ATH"
+              },
+              "BCN": {
+                "value": "BCN"
+              },
+              "BER": {
+                "value": "BER"
+              },
+              "BJS": {
+                "value": "BJS"
+              },
+              "BKK": {
+                "value": "BKK"
+              },
+              "BNE": {
+                "value": "BNE"
+              },
+              "BOG": {
+                "value": "BOG"
+              },
+              "BOM": {
+                "value": "BOM"
+              },
+              "BRC": {
+                "value": "BRC"
+              },
+              "BRU": {
+                "value": "BRU"
+              },
+              "BUE": {
+                "value": "BUE"
+              },
+              "CAI": {
+                "value": "CAI"
+              },
+              "CAS": {
+                "value": "CAS"
+              },
+              "CCS": {
+                "value": "CCS"
+              },
+              "CHI": {
+                "value": "CHI"
+              },
+              "COR": {
+                "value": "COR"
+              },
+              "CPH": {
+                "value": "CPH"
+              },
+              "CPT": {
+                "value": "CPT"
+              },
+              "CTG": {
+                "value": "CTG"
+              },
+              "CUN": {
+                "value": "CUN"
+              },
+              "DEL": {
+                "value": "DEL"
+              },
+              "DOH": {
+                "value": "DOH"
+              },
+              "DUB": {
+                "value": "DUB"
+              },
+              "DXB": {
+                "value": "DXB"
+              },
+              "FLN": {
+                "value": "FLN"
+              },
+              "FRA": {
+                "value": "FRA"
+              },
+              "HAV": {
+                "value": "HAV"
+              },
+              "HKG": {
+                "value": "HKG"
+              },
+              "IST": {
+                "value": "IST"
+              },
+              "JNB": {
+                "value": "JNB"
+              },
+              "KUL": {
+                "value": "KUL"
+              },
+              "LAS": {
+                "value": "LAS"
+              },
+              "LAX": {
+                "value": "LAX"
+              },
+              "LIM": {
+                "value": "LIM"
+              },
+              "LIS": {
+                "value": "LIS"
+              },
+              "LON": {
+                "value": "LON"
+              },
+              "LOS": {
+                "value": "LOS"
+              },
+              "LPB": {
+                "value": "LPB"
+              },
+              "MAD": {
+                "value": "MAD"
+              },
+              "MAN": {
+                "value": "MAN"
+              },
+              "MDE": {
+                "value": "MDE"
+              },
+              "MDZ": {
+                "value": "MDZ"
+              },
+              "MEL": {
+                "value": "MEL"
+              },
+              "MEX": {
+                "value": "MEX"
+              },
+              "MIA": {
+                "value": "MIA"
+              },
+              "MIL": {
+                "value": "MIL"
+              },
+              "MOS": {
+                "value": "MOS"
+              },
+              "MUC": {
+                "value": "MUC"
+              },
+              "MVD": {
+                "value": "MVD"
+              },
+              "NBO": {
+                "value": "NBO"
+              },
+              "NYC": {
+                "value": "NYC"
+              },
+              "ORL": {
+                "value": "ORL"
+              },
+              "OSA": {
+                "value": "OSA"
+              },
+              "OTP": {
+                "value": "OTP"
+              },
+              "PAR": {
+                "value": "PAR"
+              },
+              "PDP": {
+                "value": "PDP"
+              },
+              "PER": {
+                "value": "PER"
+              },
+              "PRG": {
+                "value": "PRG"
+              },
+              "PTY": {
+                "value": "PTY"
+              },
+              "PUJ": {
+                "value": "PUJ"
+              },
+              "RIO": {
+                "value": "RIO"
+              },
+              "ROM": {
+                "value": "ROM"
+              },
+              "SAO": {
+                "value": "SAO"
+              },
+              "SCL": {
+                "value": "SCL"
+              },
+              "SEL": {
+                "value": "SEL"
+              },
+              "SFO": {
+                "value": "SFO"
+              },
+              "SHA": {
+                "value": "SHA"
+              },
+              "SIN": {
+                "value": "SIN"
+              },
+              "SJO": {
+                "value": "SJO"
+              },
+              "SLA": {
+                "value": "SLA"
+              },
+              "SSA": {
+                "value": "SSA"
+              },
+              "STO": {
+                "value": "STO"
+              },
+              "SYD": {
+                "value": "SYD"
+              },
+              "TLV": {
+                "value": "TLV"
+              },
+              "TOK": {
+                "value": "TOK"
+              },
+              "UIO": {
+                "value": "UIO"
+              },
+              "USH": {
+                "value": "USH"
+              },
+              "VIE": {
+                "value": "VIE"
+              },
+              "WAS": {
+                "value": "WAS"
+              },
+              "YMQ": {
+                "value": "YMQ"
+              },
+              "YTO": {
+                "value": "YTO"
+              },
+              "YVR": {
+                "value": "YVR"
+              },
+              "ZRH": {
+                "value": "ZRH"
+              },
+              "unknown": {
+                "value": "XXX"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The city",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/City"
+                },
+                "examples": {
+                  "AKL": {
+                    "value": {
+                      "code": "AKL",
+                      "name": "Auckland",
+                      "timeZone": "Pacific/Auckland",
+                      "country": {
+                        "code": "NZ",
+                        "name": "New Zealand",
+                        "continent": {
+                          "code": "OC",
+                          "name": "Oceania"
+                        }
+                      }
+                    }
+                  },
+                  "AMS": {
+                    "value": {
+                      "code": "AMS",
+                      "name": "Amsterdam",
+                      "timeZone": "Europe/Amsterdam",
+                      "country": {
+                        "code": "NL",
+                        "name": "Netherlands",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "ASU": {
+                    "value": {
+                      "code": "ASU",
+                      "name": "Asuncion",
+                      "timeZone": "America/Asuncion",
+                      "country": {
+                        "code": "PY",
+                        "name": "Paraguay",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "ATH": {
+                    "value": {
+                      "code": "ATH",
+                      "name": "Athens",
+                      "timeZone": "Europe/Athens",
+                      "country": {
+                        "code": "GR",
+                        "name": "Greece",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "BCN": {
+                    "value": {
+                      "code": "BCN",
+                      "name": "Barcelona",
+                      "timeZone": "Europe/Madrid",
+                      "country": {
+                        "code": "ES",
+                        "name": "Spain",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "BER": {
+                    "value": {
+                      "code": "BER",
+                      "name": "Berlin",
+                      "timeZone": "Europe/Berlin",
+                      "country": {
+                        "code": "DE",
+                        "name": "Germany",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "BJS": {
+                    "value": {
+                      "code": "BJS",
+                      "name": "Beijing",
+                      "timeZone": "Asia/Shanghai",
+                      "country": {
+                        "code": "CN",
+                        "name": "China",
+                        "continent": {
+                          "code": "AS",
+                          "name": "Asia"
+                        }
+                      }
+                    }
+                  },
+                  "BKK": {
+                    "value": {
+                      "code": "BKK",
+                      "name": "Bangkok",
+                      "timeZone": "Asia/Hong_Kong",
+                      "country": {
+                        "code": "TH",
+                        "name": "Thailand",
+                        "continent": {
+                          "code": "AS",
+                          "name": "Asia"
+                        }
+                      }
+                    }
+                  },
+                  "BNE": {
+                    "value": {
+                      "code": "BNE",
+                      "name": "Brisbane",
+                      "timeZone": "Australia/Brisbane",
+                      "country": {
+                        "code": "AU",
+                        "name": "Australia",
+                        "continent": {
+                          "code": "OC",
+                          "name": "Oceania"
+                        }
+                      }
+                    }
+                  },
+                  "BOG": {
+                    "value": {
+                      "code": "BOG",
+                      "name": "Bogota",
+                      "timeZone": "America/Bogota",
+                      "country": {
+                        "code": "CO",
+                        "name": "Colombia",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "BOM": {
+                    "value": {
+                      "code": "BOM",
+                      "name": "Mumbai",
+                      "timeZone": "Asia/Kolkata",
+                      "country": {
+                        "code": "IN",
+                        "name": "India",
+                        "continent": {
+                          "code": "AS",
+                          "name": "Asia"
+                        }
+                      }
+                    }
+                  },
+                  "BRC": {
+                    "value": {
+                      "code": "BRC",
+                      "name": "Bariloche",
+                      "timeZone": "America/Argentina/Salta",
+                      "country": {
+                        "code": "AR",
+                        "name": "Argentina",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "BRU": {
+                    "value": {
+                      "code": "BRU",
+                      "name": "Brussels",
+                      "timeZone": "Europe/Brussels",
+                      "country": {
+                        "code": "BE",
+                        "name": "Belgium",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "BUE": {
+                    "value": {
+                      "code": "BUE",
+                      "name": "Buenos Aires",
+                      "timeZone": "America/Argentina/Buenos_Aires",
+                      "country": {
+                        "code": "AR",
+                        "name": "Argentina",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "CAI": {
+                    "value": {
+                      "code": "CAI",
+                      "name": "Cairo",
+                      "timeZone": "Africa/Cairo",
+                      "country": {
+                        "code": "EG",
+                        "name": "Egypt",
+                        "continent": {
+                          "code": "AF",
+                          "name": "Africa"
+                        }
+                      }
+                    }
+                  },
+                  "CAS": {
+                    "value": {
+                      "code": "CAS",
+                      "name": "Casablanca",
+                      "timeZone": "Africa/Casablanca",
+                      "country": {
+                        "code": "MA",
+                        "name": "Morocco",
+                        "continent": {
+                          "code": "AF",
+                          "name": "Africa"
+                        }
+                      }
+                    }
+                  },
+                  "CCS": {
+                    "value": {
+                      "code": "CCS",
+                      "name": "Caracas",
+                      "timeZone": "America/Caracas",
+                      "country": {
+                        "code": "VE",
+                        "name": "Venezuela",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "CHI": {
+                    "value": {
+                      "code": "CHI",
+                      "name": "Chicago",
+                      "timeZone": "America/Chicago",
+                      "country": {
+                        "code": "US",
+                        "name": "United States of America",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "COR": {
+                    "value": {
+                      "code": "COR",
+                      "name": "Cordoba",
+                      "timeZone": "America/Argentina/Cordoba",
+                      "country": {
+                        "code": "AR",
+                        "name": "Argentina",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "CPH": {
+                    "value": {
+                      "code": "CPH",
+                      "name": "Copenhagen",
+                      "timeZone": "Europe/Copenhagen",
+                      "country": {
+                        "code": "DK",
+                        "name": "Denmark",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "CPT": {
+                    "value": {
+                      "code": "CPT",
+                      "name": "Cape Town",
+                      "timeZone": "Africa/Johannesburg",
+                      "country": {
+                        "code": "ZA",
+                        "name": "South Africa",
+                        "continent": {
+                          "code": "AF",
+                          "name": "Africa"
+                        }
+                      }
+                    }
+                  },
+                  "CTG": {
+                    "value": {
+                      "code": "CTG",
+                      "name": "Cartagena",
+                      "timeZone": "America/Bogota",
+                      "country": {
+                        "code": "CO",
+                        "name": "Colombia",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "CUN": {
+                    "value": {
+                      "code": "CUN",
+                      "name": "Cancun",
+                      "timeZone": "America/Cancun",
+                      "country": {
+                        "code": "MX",
+                        "name": "Mexico",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "DEL": {
+                    "value": {
+                      "code": "DEL",
+                      "name": "Delhi",
+                      "timeZone": "Asia/Kolkata",
+                      "country": {
+                        "code": "IN",
+                        "name": "India",
+                        "continent": {
+                          "code": "AS",
+                          "name": "Asia"
+                        }
+                      }
+                    }
+                  },
+                  "DOH": {
+                    "value": {
+                      "code": "DOH",
+                      "name": "Doha",
+                      "timeZone": "Asia/Qatar",
+                      "country": {
+                        "code": "QA",
+                        "name": "Qatar",
+                        "continent": {
+                          "code": "AS",
+                          "name": "Asia"
+                        }
+                      }
+                    }
+                  },
+                  "DUB": {
+                    "value": {
+                      "code": "DUB",
+                      "name": "Dublin",
+                      "timeZone": "Europe/Dublin",
+                      "country": {
+                        "code": "IE",
+                        "name": "Ireland",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "DXB": {
+                    "value": {
+                      "code": "DXB",
+                      "name": "Dubai",
+                      "timeZone": "Asia/Dubai",
+                      "country": {
+                        "code": "AE",
+                        "name": "United Arab Emirates",
+                        "continent": {
+                          "code": "AS",
+                          "name": "Asia"
+                        }
+                      }
+                    }
+                  },
+                  "FLN": {
+                    "value": {
+                      "code": "FLN",
+                      "name": "Florianopolis",
+                      "timeZone": "America/Sao_Paulo",
+                      "country": {
+                        "code": "BR",
+                        "name": "Brazil",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "FRA": {
+                    "value": {
+                      "code": "FRA",
+                      "name": "Frankfurt",
+                      "timeZone": "Europe/Berlin",
+                      "country": {
+                        "code": "DE",
+                        "name": "Germany",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "HAV": {
+                    "value": {
+                      "code": "HAV",
+                      "name": "Havana",
+                      "timeZone": "America/Havana",
+                      "country": {
+                        "code": "CU",
+                        "name": "Cuba",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "HKG": {
+                    "value": {
+                      "code": "HKG",
+                      "name": "Hong Kong",
+                      "timeZone": "Asia/Hong_Kong",
+                      "country": {
+                        "code": "HK",
+                        "name": "Hong Kong",
+                        "continent": {
+                          "code": "AS",
+                          "name": "Asia"
+                        }
+                      }
+                    }
+                  },
+                  "IST": {
+                    "value": {
+                      "code": "IST",
+                      "name": "Istanbul",
+                      "timeZone": "Europe/Istanbul",
+                      "country": {
+                        "code": "TR",
+                        "name": "Turkey",
+                        "continent": {
+                          "code": "AS",
+                          "name": "Asia"
+                        }
+                      }
+                    }
+                  },
+                  "JNB": {
+                    "value": {
+                      "code": "JNB",
+                      "name": "Johannesburg",
+                      "timeZone": "Africa/Johannesburg",
+                      "country": {
+                        "code": "ZA",
+                        "name": "South Africa",
+                        "continent": {
+                          "code": "AF",
+                          "name": "Africa"
+                        }
+                      }
+                    }
+                  },
+                  "KUL": {
+                    "value": {
+                      "code": "KUL",
+                      "name": "Kuala Lumpur",
+                      "timeZone": "Asia/Kuala_Lumpur",
+                      "country": {
+                        "code": "MY",
+                        "name": "Malaysia",
+                        "continent": {
+                          "code": "AS",
+                          "name": "Asia"
+                        }
+                      }
+                    }
+                  },
+                  "LAS": {
+                    "value": {
+                      "code": "LAS",
+                      "name": "Las Vegas",
+                      "timeZone": "America/Los_Angeles",
+                      "country": {
+                        "code": "US",
+                        "name": "United States of America",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "LAX": {
+                    "value": {
+                      "code": "LAX",
+                      "name": "Los Angeles",
+                      "timeZone": "America/Los_Angeles",
+                      "country": {
+                        "code": "US",
+                        "name": "United States of America",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "LIM": {
+                    "value": {
+                      "code": "LIM",
+                      "name": "Lima",
+                      "timeZone": "America/Lima",
+                      "country": {
+                        "code": "PE",
+                        "name": "Peru",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "LIS": {
+                    "value": {
+                      "code": "LIS",
+                      "name": "Lisbon",
+                      "timeZone": "Europe/Lisbon",
+                      "country": {
+                        "code": "PT",
+                        "name": "Portugal",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "LON": {
+                    "value": {
+                      "code": "LON",
+                      "name": "London",
+                      "timeZone": "Europe/London",
+                      "country": {
+                        "code": "GB",
+                        "name": "United Kingdom",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "LOS": {
+                    "value": {
+                      "code": "LOS",
+                      "name": "Lagos",
+                      "timeZone": "Africa/Lagos",
+                      "country": {
+                        "code": "NG",
+                        "name": "Nigeria",
+                        "continent": {
+                          "code": "AF",
+                          "name": "Africa"
+                        }
+                      }
+                    }
+                  },
+                  "LPB": {
+                    "value": {
+                      "code": "LPB",
+                      "name": "La Paz",
+                      "timeZone": "America/La_Paz",
+                      "country": {
+                        "code": "BO",
+                        "name": "Bolivia",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "MAD": {
+                    "value": {
+                      "code": "MAD",
+                      "name": "Madrid",
+                      "timeZone": "Europe/Madrid",
+                      "country": {
+                        "code": "ES",
+                        "name": "Spain",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "MAN": {
+                    "value": {
+                      "code": "MAN",
+                      "name": "Manila",
+                      "timeZone": "Asia/Manila",
+                      "country": {
+                        "code": "PH",
+                        "name": "Philippines",
+                        "continent": {
+                          "code": "AS",
+                          "name": "Asia"
+                        }
+                      }
+                    }
+                  },
+                  "MDE": {
+                    "value": {
+                      "code": "MDE",
+                      "name": "Medellin",
+                      "timeZone": "America/Bogota",
+                      "country": {
+                        "code": "CO",
+                        "name": "Colombia",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "MDZ": {
+                    "value": {
+                      "code": "MDZ",
+                      "name": "Mendoza",
+                      "timeZone": "America/Argentina/Mendoza",
+                      "country": {
+                        "code": "AR",
+                        "name": "Argentina",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "MEL": {
+                    "value": {
+                      "code": "MEL",
+                      "name": "Melboure",
+                      "timeZone": "Australia/Melbourne",
+                      "country": {
+                        "code": "AU",
+                        "name": "Australia",
+                        "continent": {
+                          "code": "OC",
+                          "name": "Oceania"
+                        }
+                      }
+                    }
+                  },
+                  "MEX": {
+                    "value": {
+                      "code": "MEX",
+                      "name": "Mexico City",
+                      "timeZone": "America/Mexico_City",
+                      "country": {
+                        "code": "MX",
+                        "name": "Mexico",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "MIA": {
+                    "value": {
+                      "code": "MIA",
+                      "name": "Miami",
+                      "timeZone": "America/New_York",
+                      "country": {
+                        "code": "US",
+                        "name": "United States of America",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "MIL": {
+                    "value": {
+                      "code": "MIL",
+                      "name": "Milan",
+                      "timeZone": "Europe/Rome",
+                      "country": {
+                        "code": "IT",
+                        "name": "Italy",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "MOS": {
+                    "value": {
+                      "code": "MOS",
+                      "name": "Moscow",
+                      "timeZone": "Europe/Moscow",
+                      "country": {
+                        "code": "RU",
+                        "name": "Russian Federation",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "MUC": {
+                    "value": {
+                      "code": "MUC",
+                      "name": "Munich",
+                      "timeZone": "Europe/Berlin",
+                      "country": {
+                        "code": "DE",
+                        "name": "Germany",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "MVD": {
+                    "value": {
+                      "code": "MVD",
+                      "name": "Montevideo",
+                      "timeZone": "America/Montevideo",
+                      "country": {
+                        "code": "UY",
+                        "name": "Uruguay",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "NBO": {
+                    "value": {
+                      "code": "NBO",
+                      "name": "Nairobi",
+                      "timeZone": "Africa/Nairobi",
+                      "country": {
+                        "code": "KE",
+                        "name": "Kenya",
+                        "continent": {
+                          "code": "AF",
+                          "name": "Africa"
+                        }
+                      }
+                    }
+                  },
+                  "NYC": {
+                    "value": {
+                      "code": "NYC",
+                      "name": "New York",
+                      "timeZone": "America/New_York",
+                      "country": {
+                        "code": "US",
+                        "name": "United States of America",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "ORL": {
+                    "value": {
+                      "code": "ORL",
+                      "name": "Orlando",
+                      "timeZone": "America/New_York",
+                      "country": {
+                        "code": "US",
+                        "name": "United States of America",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "OSA": {
+                    "value": {
+                      "code": "OSA",
+                      "name": "Osaka",
+                      "timeZone": "Asia/Tokyo",
+                      "country": {
+                        "code": "JP",
+                        "name": "Japan",
+                        "continent": {
+                          "code": "AS",
+                          "name": "Asia"
+                        }
+                      }
+                    }
+                  },
+                  "OTP": {
+                    "value": {
+                      "code": "OTP",
+                      "name": "Bucharest",
+                      "timeZone": "Europe/Bucharest",
+                      "country": {
+                        "code": "RO",
+                        "name": "Romania",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "PAR": {
+                    "value": {
+                      "code": "PAR",
+                      "name": "Paris",
+                      "timeZone": "Europe/Paris",
+                      "country": {
+                        "code": "FR",
+                        "name": "France",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "PDP": {
+                    "value": {
+                      "code": "PDP",
+                      "name": "Punta del Este",
+                      "timeZone": "America/Montevideo",
+                      "country": {
+                        "code": "UY",
+                        "name": "Uruguay",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "PER": {
+                    "value": {
+                      "code": "PER",
+                      "name": "Perth",
+                      "timeZone": "Australia/Perth",
+                      "country": {
+                        "code": "AU",
+                        "name": "Australia",
+                        "continent": {
+                          "code": "OC",
+                          "name": "Oceania"
+                        }
+                      }
+                    }
+                  },
+                  "PRG": {
+                    "value": {
+                      "code": "PRG",
+                      "name": "Prague",
+                      "timeZone": "Europe/Prague",
+                      "country": {
+                        "code": "CZ",
+                        "name": "Czech Republic",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "PTY": {
+                    "value": {
+                      "code": "PTY",
+                      "name": "Panama City",
+                      "timeZone": "America/Panama",
+                      "country": {
+                        "code": "PA",
+                        "name": "Panama",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "PUJ": {
+                    "value": {
+                      "code": "PUJ",
+                      "name": "Punta Cana",
+                      "timeZone": "America/Santo_Domingo",
+                      "country": {
+                        "code": "DO",
+                        "name": "Dominican Republic",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "RIO": {
+                    "value": {
+                      "code": "RIO",
+                      "name": "Rio de Janeiro",
+                      "timeZone": "America/Sao_Paulo",
+                      "country": {
+                        "code": "BR",
+                        "name": "Brazil",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "ROM": {
+                    "value": {
+                      "code": "ROM",
+                      "name": "Rome",
+                      "timeZone": "Europe/Rome",
+                      "country": {
+                        "code": "IT",
+                        "name": "Italy",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "SAO": {
+                    "value": {
+                      "code": "SAO",
+                      "name": "Sao Paulo",
+                      "timeZone": "America/Sao_Paulo",
+                      "country": {
+                        "code": "BR",
+                        "name": "Brazil",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "SCL": {
+                    "value": {
+                      "code": "SCL",
+                      "name": "Santiago",
+                      "timeZone": "America/Santiago",
+                      "country": {
+                        "code": "CL",
+                        "name": "Chile",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "SEL": {
+                    "value": {
+                      "code": "SEL",
+                      "name": "Seoul",
+                      "timeZone": "Asia/Seoul",
+                      "country": {
+                        "code": "KR",
+                        "name": "Korea, South",
+                        "continent": {
+                          "code": "AS",
+                          "name": "Asia"
+                        }
+                      }
+                    }
+                  },
+                  "SFO": {
+                    "value": {
+                      "code": "SFO",
+                      "name": "San Francisco",
+                      "timeZone": "America/Los_Angeles",
+                      "country": {
+                        "code": "US",
+                        "name": "United States of America",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "SHA": {
+                    "value": {
+                      "code": "SHA",
+                      "name": "Shanghai",
+                      "timeZone": "Asia/Shanghai",
+                      "country": {
+                        "code": "CN",
+                        "name": "China",
+                        "continent": {
+                          "code": "AS",
+                          "name": "Asia"
+                        }
+                      }
+                    }
+                  },
+                  "SIN": {
+                    "value": {
+                      "code": "SIN",
+                      "name": "Singapore",
+                      "timeZone": "Asia/Singapore",
+                      "country": {
+                        "code": "SG",
+                        "name": "Singapore",
+                        "continent": {
+                          "code": "AS",
+                          "name": "Asia"
+                        }
+                      }
+                    }
+                  },
+                  "SJO": {
+                    "value": {
+                      "code": "SJO",
+                      "name": "San Jose",
+                      "timeZone": "America/Costa_Rica",
+                      "country": {
+                        "code": "CR",
+                        "name": "Costa Rica",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "SLA": {
+                    "value": {
+                      "code": "SLA",
+                      "name": "Salta",
+                      "timeZone": "America/Argentina/Salta",
+                      "country": {
+                        "code": "AR",
+                        "name": "Argentina",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "SSA": {
+                    "value": {
+                      "code": "SSA",
+                      "name": "Salvador",
+                      "timeZone": "America/Bahia",
+                      "country": {
+                        "code": "BR",
+                        "name": "Brazil",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "STO": {
+                    "value": {
+                      "code": "STO",
+                      "name": "Stockholm",
+                      "timeZone": "Europe/Stockholm",
+                      "country": {
+                        "code": "SE",
+                        "name": "Sweden",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "SYD": {
+                    "value": {
+                      "code": "SYD",
+                      "name": "Sydney",
+                      "timeZone": "Australia/Sydney",
+                      "country": {
+                        "code": "AU",
+                        "name": "Australia",
+                        "continent": {
+                          "code": "OC",
+                          "name": "Oceania"
+                        }
+                      }
+                    }
+                  },
+                  "TLV": {
+                    "value": {
+                      "code": "TLV",
+                      "name": "Tel Aviv",
+                      "timeZone": "Asia/Jerusalem",
+                      "country": {
+                        "code": "IL",
+                        "name": "Israel",
+                        "continent": {
+                          "code": "AS",
+                          "name": "Asia"
+                        }
+                      }
+                    }
+                  },
+                  "TOK": {
+                    "value": {
+                      "code": "TOK",
+                      "name": "Tokyo",
+                      "timeZone": "Asia/Tokyo",
+                      "country": {
+                        "code": "JP",
+                        "name": "Japan",
+                        "continent": {
+                          "code": "AS",
+                          "name": "Asia"
+                        }
+                      }
+                    }
+                  },
+                  "UIO": {
+                    "value": {
+                      "code": "UIO",
+                      "name": "Quito",
+                      "timeZone": "America/Guayaquil",
+                      "country": {
+                        "code": "EC",
+                        "name": "Ecuador",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "USH": {
+                    "value": {
+                      "code": "USH",
+                      "name": "Ushuaia",
+                      "timeZone": "America/Argentina/Ushuaia",
+                      "country": {
+                        "code": "AR",
+                        "name": "Argentina",
+                        "continent": {
+                          "code": "SA",
+                          "name": "South America"
+                        }
+                      }
+                    }
+                  },
+                  "VIE": {
+                    "value": {
+                      "code": "VIE",
+                      "name": "Vienna",
+                      "timeZone": "Europe/Vienna",
+                      "country": {
+                        "code": "AT",
+                        "name": "Austria",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  },
+                  "WAS": {
+                    "value": {
+                      "code": "WAS",
+                      "name": "Washington",
+                      "timeZone": "America/New_York",
+                      "country": {
+                        "code": "US",
+                        "name": "United States of America",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "YMQ": {
+                    "value": {
+                      "code": "YMQ",
+                      "name": "Montreal",
+                      "timeZone": "America/Toronto",
+                      "country": {
+                        "code": "CA",
+                        "name": "Canada",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "YTO": {
+                    "value": {
+                      "code": "YTO",
+                      "name": "Toronto",
+                      "timeZone": "America/Toronto",
+                      "country": {
+                        "code": "CA",
+                        "name": "Canada",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "YVR": {
+                    "value": {
+                      "code": "YVR",
+                      "name": "Vancouver",
+                      "timeZone": "America/Vancouver",
+                      "country": {
+                        "code": "CA",
+                        "name": "Canada",
+                        "continent": {
+                          "code": "NA",
+                          "name": "North America"
+                        }
+                      }
+                    }
+                  },
+                  "ZRH": {
+                    "value": {
+                      "code": "ZRH",
+                      "name": "Zurich",
+                      "timeZone": "Europe/Zurich",
+                      "country": {
+                        "code": "CH",
+                        "name": "Switzerland",
+                        "continent": {
+                          "code": "EU",
+                          "name": "Europe"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The city does not exist (40401)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "unknown": {
+                    "value": {
+                      "code": 40401,
+                      "shortDescription": "The city does not exist",
+                      "reasons": [
+                        "XXX"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The database of the catalog is not available (50301). The client retries it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cities": {
+      "get": {
+        "operationId": "getCities",
+        "summary": "Get several cities by their codes",
+        "x-microcks-operation": {
+          "dispatcher": "SCRIPT",
+          "dispatcherRules": "def code = (mockRequest.getRequest().getParameter(\"codes\") ?: \"\").toUpperCase()\ndef known = ['AKL', 'AMS', 'ASU', 'ATH', 'BCN', 'BER', 'BJS', 'BKK', 'BNE', 'BOG', 'BOM', 'BRC', 'BRU', 'BUE', 'CAI', 'CAS', 'CCS', 'CHI', 'COR', 'CPH', 'CPT', 'CTG', 'CUN', 'DEL', 'DOH', 'DUB', 'DXB', 'FLN', 'FRA', 'HAV', 'HKG', 'IST', 'JNB', 'KUL', 'LAS', 'LAX', 'LIM', 'LIS', 'LON', 'LOS', 'LPB', 'MAD', 'MAN', 'MDE', 'MDZ', 'MEL', 'MEX', 'MIA', 'MIL', 'MOS', 'MUC', 'MVD', 'NBO', 'NYC', 'ORL', 'OSA', 'OTP', 'PAR', 'PDP', 'PER', 'PRG', 'PTY', 'PUJ', 'RIO', 'ROM', 'SAO', 'SCL', 'SEL', 'SFO', 'SHA', 'SIN', 'SJO', 'SLA', 'SSA', 'STO', 'SYD', 'TLV', 'TOK', 'UIO', 'USH', 'VIE', 'WAS', 'YMQ', 'YTO', 'YVR', 'ZRH']\nreturn known.contains(code) ? code : \"unknown\"\n"
+        },
+        "x-twa-client-retry": {
+          "timeouts": "connection and reading of catalog.remote (500 ms each by default)",
+          "maxAttempts": 2,
+          "backoffMillis": 100,
+          "retryOn": [
+            "I/O error or timeout",
+            502,
+            503,
+            504
+          ],
+          "doNotRetryOn": [
+            "4xx",
+            500,
+            "invalid body"
+          ]
+        },
+        "parameters": [
+          {
+            "name": "codes",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Up to 50 codes separated by comma, in any case. The repeated and empty ones are ignored",
+            "examples": {
+              "AKL": {
+                "value": "AKL"
+              },
+              "AMS": {
+                "value": "AMS"
+              },
+              "ASU": {
+                "value": "ASU"
+              },
+              "ATH": {
+                "value": "ATH"
+              },
+              "BCN": {
+                "value": "BCN"
+              },
+              "BER": {
+                "value": "BER"
+              },
+              "BJS": {
+                "value": "BJS"
+              },
+              "BKK": {
+                "value": "BKK"
+              },
+              "BNE": {
+                "value": "BNE"
+              },
+              "BOG": {
+                "value": "BOG"
+              },
+              "BOM": {
+                "value": "BOM"
+              },
+              "BRC": {
+                "value": "BRC"
+              },
+              "BRU": {
+                "value": "BRU"
+              },
+              "BUE": {
+                "value": "BUE"
+              },
+              "CAI": {
+                "value": "CAI"
+              },
+              "CAS": {
+                "value": "CAS"
+              },
+              "CCS": {
+                "value": "CCS"
+              },
+              "CHI": {
+                "value": "CHI"
+              },
+              "COR": {
+                "value": "COR"
+              },
+              "CPH": {
+                "value": "CPH"
+              },
+              "CPT": {
+                "value": "CPT"
+              },
+              "CTG": {
+                "value": "CTG"
+              },
+              "CUN": {
+                "value": "CUN"
+              },
+              "DEL": {
+                "value": "DEL"
+              },
+              "DOH": {
+                "value": "DOH"
+              },
+              "DUB": {
+                "value": "DUB"
+              },
+              "DXB": {
+                "value": "DXB"
+              },
+              "FLN": {
+                "value": "FLN"
+              },
+              "FRA": {
+                "value": "FRA"
+              },
+              "HAV": {
+                "value": "HAV"
+              },
+              "HKG": {
+                "value": "HKG"
+              },
+              "IST": {
+                "value": "IST"
+              },
+              "JNB": {
+                "value": "JNB"
+              },
+              "KUL": {
+                "value": "KUL"
+              },
+              "LAS": {
+                "value": "LAS"
+              },
+              "LAX": {
+                "value": "LAX"
+              },
+              "LIM": {
+                "value": "LIM"
+              },
+              "LIS": {
+                "value": "LIS"
+              },
+              "LON": {
+                "value": "LON"
+              },
+              "LOS": {
+                "value": "LOS"
+              },
+              "LPB": {
+                "value": "LPB"
+              },
+              "MAD": {
+                "value": "MAD"
+              },
+              "MAN": {
+                "value": "MAN"
+              },
+              "MDE": {
+                "value": "MDE"
+              },
+              "MDZ": {
+                "value": "MDZ"
+              },
+              "MEL": {
+                "value": "MEL"
+              },
+              "MEX": {
+                "value": "MEX"
+              },
+              "MIA": {
+                "value": "MIA"
+              },
+              "MIL": {
+                "value": "MIL"
+              },
+              "MOS": {
+                "value": "MOS"
+              },
+              "MUC": {
+                "value": "MUC"
+              },
+              "MVD": {
+                "value": "MVD"
+              },
+              "NBO": {
+                "value": "NBO"
+              },
+              "NYC": {
+                "value": "NYC"
+              },
+              "ORL": {
+                "value": "ORL"
+              },
+              "OSA": {
+                "value": "OSA"
+              },
+              "OTP": {
+                "value": "OTP"
+              },
+              "PAR": {
+                "value": "PAR"
+              },
+              "PDP": {
+                "value": "PDP"
+              },
+              "PER": {
+                "value": "PER"
+              },
+              "PRG": {
+                "value": "PRG"
+              },
+              "PTY": {
+                "value": "PTY"
+              },
+              "PUJ": {
+                "value": "PUJ"
+              },
+              "RIO": {
+                "value": "RIO"
+              },
+              "ROM": {
+                "value": "ROM"
+              },
+              "SAO": {
+                "value": "SAO"
+              },
+              "SCL": {
+                "value": "SCL"
+              },
+              "SEL": {
+                "value": "SEL"
+              },
+              "SFO": {
+                "value": "SFO"
+              },
+              "SHA": {
+                "value": "SHA"
+              },
+              "SIN": {
+                "value": "SIN"
+              },
+              "SJO": {
+                "value": "SJO"
+              },
+              "SLA": {
+                "value": "SLA"
+              },
+              "SSA": {
+                "value": "SSA"
+              },
+              "STO": {
+                "value": "STO"
+              },
+              "SYD": {
+                "value": "SYD"
+              },
+              "TLV": {
+                "value": "TLV"
+              },
+              "TOK": {
+                "value": "TOK"
+              },
+              "UIO": {
+                "value": "UIO"
+              },
+              "USH": {
+                "value": "USH"
+              },
+              "VIE": {
+                "value": "VIE"
+              },
+              "WAS": {
+                "value": "WAS"
+              },
+              "YMQ": {
+                "value": "YMQ"
+              },
+              "YTO": {
+                "value": "YTO"
+              },
+              "YVR": {
+                "value": "YVR"
+              },
+              "ZRH": {
+                "value": "ZRH"
+              },
+              "unknown": {
+                "value": "XXX"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The cities that exist, in the order of the request and without repeated. The unknown codes are not in the list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/City"
+                  }
+                },
+                "examples": {
+                  "AKL": {
+                    "value": [
+                      {
+                        "code": "AKL",
+                        "name": "Auckland",
+                        "timeZone": "Pacific/Auckland",
+                        "country": {
+                          "code": "NZ",
+                          "name": "New Zealand",
+                          "continent": {
+                            "code": "OC",
+                            "name": "Oceania"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "AMS": {
+                    "value": [
+                      {
+                        "code": "AMS",
+                        "name": "Amsterdam",
+                        "timeZone": "Europe/Amsterdam",
+                        "country": {
+                          "code": "NL",
+                          "name": "Netherlands",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "ASU": {
+                    "value": [
+                      {
+                        "code": "ASU",
+                        "name": "Asuncion",
+                        "timeZone": "America/Asuncion",
+                        "country": {
+                          "code": "PY",
+                          "name": "Paraguay",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "ATH": {
+                    "value": [
+                      {
+                        "code": "ATH",
+                        "name": "Athens",
+                        "timeZone": "Europe/Athens",
+                        "country": {
+                          "code": "GR",
+                          "name": "Greece",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "BCN": {
+                    "value": [
+                      {
+                        "code": "BCN",
+                        "name": "Barcelona",
+                        "timeZone": "Europe/Madrid",
+                        "country": {
+                          "code": "ES",
+                          "name": "Spain",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "BER": {
+                    "value": [
+                      {
+                        "code": "BER",
+                        "name": "Berlin",
+                        "timeZone": "Europe/Berlin",
+                        "country": {
+                          "code": "DE",
+                          "name": "Germany",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "BJS": {
+                    "value": [
+                      {
+                        "code": "BJS",
+                        "name": "Beijing",
+                        "timeZone": "Asia/Shanghai",
+                        "country": {
+                          "code": "CN",
+                          "name": "China",
+                          "continent": {
+                            "code": "AS",
+                            "name": "Asia"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "BKK": {
+                    "value": [
+                      {
+                        "code": "BKK",
+                        "name": "Bangkok",
+                        "timeZone": "Asia/Hong_Kong",
+                        "country": {
+                          "code": "TH",
+                          "name": "Thailand",
+                          "continent": {
+                            "code": "AS",
+                            "name": "Asia"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "BNE": {
+                    "value": [
+                      {
+                        "code": "BNE",
+                        "name": "Brisbane",
+                        "timeZone": "Australia/Brisbane",
+                        "country": {
+                          "code": "AU",
+                          "name": "Australia",
+                          "continent": {
+                            "code": "OC",
+                            "name": "Oceania"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "BOG": {
+                    "value": [
+                      {
+                        "code": "BOG",
+                        "name": "Bogota",
+                        "timeZone": "America/Bogota",
+                        "country": {
+                          "code": "CO",
+                          "name": "Colombia",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "BOM": {
+                    "value": [
+                      {
+                        "code": "BOM",
+                        "name": "Mumbai",
+                        "timeZone": "Asia/Kolkata",
+                        "country": {
+                          "code": "IN",
+                          "name": "India",
+                          "continent": {
+                            "code": "AS",
+                            "name": "Asia"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "BRC": {
+                    "value": [
+                      {
+                        "code": "BRC",
+                        "name": "Bariloche",
+                        "timeZone": "America/Argentina/Salta",
+                        "country": {
+                          "code": "AR",
+                          "name": "Argentina",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "BRU": {
+                    "value": [
+                      {
+                        "code": "BRU",
+                        "name": "Brussels",
+                        "timeZone": "Europe/Brussels",
+                        "country": {
+                          "code": "BE",
+                          "name": "Belgium",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "BUE": {
+                    "value": [
+                      {
+                        "code": "BUE",
+                        "name": "Buenos Aires",
+                        "timeZone": "America/Argentina/Buenos_Aires",
+                        "country": {
+                          "code": "AR",
+                          "name": "Argentina",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "CAI": {
+                    "value": [
+                      {
+                        "code": "CAI",
+                        "name": "Cairo",
+                        "timeZone": "Africa/Cairo",
+                        "country": {
+                          "code": "EG",
+                          "name": "Egypt",
+                          "continent": {
+                            "code": "AF",
+                            "name": "Africa"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "CAS": {
+                    "value": [
+                      {
+                        "code": "CAS",
+                        "name": "Casablanca",
+                        "timeZone": "Africa/Casablanca",
+                        "country": {
+                          "code": "MA",
+                          "name": "Morocco",
+                          "continent": {
+                            "code": "AF",
+                            "name": "Africa"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "CCS": {
+                    "value": [
+                      {
+                        "code": "CCS",
+                        "name": "Caracas",
+                        "timeZone": "America/Caracas",
+                        "country": {
+                          "code": "VE",
+                          "name": "Venezuela",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "CHI": {
+                    "value": [
+                      {
+                        "code": "CHI",
+                        "name": "Chicago",
+                        "timeZone": "America/Chicago",
+                        "country": {
+                          "code": "US",
+                          "name": "United States of America",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "COR": {
+                    "value": [
+                      {
+                        "code": "COR",
+                        "name": "Cordoba",
+                        "timeZone": "America/Argentina/Cordoba",
+                        "country": {
+                          "code": "AR",
+                          "name": "Argentina",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "CPH": {
+                    "value": [
+                      {
+                        "code": "CPH",
+                        "name": "Copenhagen",
+                        "timeZone": "Europe/Copenhagen",
+                        "country": {
+                          "code": "DK",
+                          "name": "Denmark",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "CPT": {
+                    "value": [
+                      {
+                        "code": "CPT",
+                        "name": "Cape Town",
+                        "timeZone": "Africa/Johannesburg",
+                        "country": {
+                          "code": "ZA",
+                          "name": "South Africa",
+                          "continent": {
+                            "code": "AF",
+                            "name": "Africa"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "CTG": {
+                    "value": [
+                      {
+                        "code": "CTG",
+                        "name": "Cartagena",
+                        "timeZone": "America/Bogota",
+                        "country": {
+                          "code": "CO",
+                          "name": "Colombia",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "CUN": {
+                    "value": [
+                      {
+                        "code": "CUN",
+                        "name": "Cancun",
+                        "timeZone": "America/Cancun",
+                        "country": {
+                          "code": "MX",
+                          "name": "Mexico",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "DEL": {
+                    "value": [
+                      {
+                        "code": "DEL",
+                        "name": "Delhi",
+                        "timeZone": "Asia/Kolkata",
+                        "country": {
+                          "code": "IN",
+                          "name": "India",
+                          "continent": {
+                            "code": "AS",
+                            "name": "Asia"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "DOH": {
+                    "value": [
+                      {
+                        "code": "DOH",
+                        "name": "Doha",
+                        "timeZone": "Asia/Qatar",
+                        "country": {
+                          "code": "QA",
+                          "name": "Qatar",
+                          "continent": {
+                            "code": "AS",
+                            "name": "Asia"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "DUB": {
+                    "value": [
+                      {
+                        "code": "DUB",
+                        "name": "Dublin",
+                        "timeZone": "Europe/Dublin",
+                        "country": {
+                          "code": "IE",
+                          "name": "Ireland",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "DXB": {
+                    "value": [
+                      {
+                        "code": "DXB",
+                        "name": "Dubai",
+                        "timeZone": "Asia/Dubai",
+                        "country": {
+                          "code": "AE",
+                          "name": "United Arab Emirates",
+                          "continent": {
+                            "code": "AS",
+                            "name": "Asia"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "FLN": {
+                    "value": [
+                      {
+                        "code": "FLN",
+                        "name": "Florianopolis",
+                        "timeZone": "America/Sao_Paulo",
+                        "country": {
+                          "code": "BR",
+                          "name": "Brazil",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "FRA": {
+                    "value": [
+                      {
+                        "code": "FRA",
+                        "name": "Frankfurt",
+                        "timeZone": "Europe/Berlin",
+                        "country": {
+                          "code": "DE",
+                          "name": "Germany",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "HAV": {
+                    "value": [
+                      {
+                        "code": "HAV",
+                        "name": "Havana",
+                        "timeZone": "America/Havana",
+                        "country": {
+                          "code": "CU",
+                          "name": "Cuba",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "HKG": {
+                    "value": [
+                      {
+                        "code": "HKG",
+                        "name": "Hong Kong",
+                        "timeZone": "Asia/Hong_Kong",
+                        "country": {
+                          "code": "HK",
+                          "name": "Hong Kong",
+                          "continent": {
+                            "code": "AS",
+                            "name": "Asia"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "IST": {
+                    "value": [
+                      {
+                        "code": "IST",
+                        "name": "Istanbul",
+                        "timeZone": "Europe/Istanbul",
+                        "country": {
+                          "code": "TR",
+                          "name": "Turkey",
+                          "continent": {
+                            "code": "AS",
+                            "name": "Asia"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "JNB": {
+                    "value": [
+                      {
+                        "code": "JNB",
+                        "name": "Johannesburg",
+                        "timeZone": "Africa/Johannesburg",
+                        "country": {
+                          "code": "ZA",
+                          "name": "South Africa",
+                          "continent": {
+                            "code": "AF",
+                            "name": "Africa"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "KUL": {
+                    "value": [
+                      {
+                        "code": "KUL",
+                        "name": "Kuala Lumpur",
+                        "timeZone": "Asia/Kuala_Lumpur",
+                        "country": {
+                          "code": "MY",
+                          "name": "Malaysia",
+                          "continent": {
+                            "code": "AS",
+                            "name": "Asia"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "LAS": {
+                    "value": [
+                      {
+                        "code": "LAS",
+                        "name": "Las Vegas",
+                        "timeZone": "America/Los_Angeles",
+                        "country": {
+                          "code": "US",
+                          "name": "United States of America",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "LAX": {
+                    "value": [
+                      {
+                        "code": "LAX",
+                        "name": "Los Angeles",
+                        "timeZone": "America/Los_Angeles",
+                        "country": {
+                          "code": "US",
+                          "name": "United States of America",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "LIM": {
+                    "value": [
+                      {
+                        "code": "LIM",
+                        "name": "Lima",
+                        "timeZone": "America/Lima",
+                        "country": {
+                          "code": "PE",
+                          "name": "Peru",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "LIS": {
+                    "value": [
+                      {
+                        "code": "LIS",
+                        "name": "Lisbon",
+                        "timeZone": "Europe/Lisbon",
+                        "country": {
+                          "code": "PT",
+                          "name": "Portugal",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "LON": {
+                    "value": [
+                      {
+                        "code": "LON",
+                        "name": "London",
+                        "timeZone": "Europe/London",
+                        "country": {
+                          "code": "GB",
+                          "name": "United Kingdom",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "LOS": {
+                    "value": [
+                      {
+                        "code": "LOS",
+                        "name": "Lagos",
+                        "timeZone": "Africa/Lagos",
+                        "country": {
+                          "code": "NG",
+                          "name": "Nigeria",
+                          "continent": {
+                            "code": "AF",
+                            "name": "Africa"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "LPB": {
+                    "value": [
+                      {
+                        "code": "LPB",
+                        "name": "La Paz",
+                        "timeZone": "America/La_Paz",
+                        "country": {
+                          "code": "BO",
+                          "name": "Bolivia",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "MAD": {
+                    "value": [
+                      {
+                        "code": "MAD",
+                        "name": "Madrid",
+                        "timeZone": "Europe/Madrid",
+                        "country": {
+                          "code": "ES",
+                          "name": "Spain",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "MAN": {
+                    "value": [
+                      {
+                        "code": "MAN",
+                        "name": "Manila",
+                        "timeZone": "Asia/Manila",
+                        "country": {
+                          "code": "PH",
+                          "name": "Philippines",
+                          "continent": {
+                            "code": "AS",
+                            "name": "Asia"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "MDE": {
+                    "value": [
+                      {
+                        "code": "MDE",
+                        "name": "Medellin",
+                        "timeZone": "America/Bogota",
+                        "country": {
+                          "code": "CO",
+                          "name": "Colombia",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "MDZ": {
+                    "value": [
+                      {
+                        "code": "MDZ",
+                        "name": "Mendoza",
+                        "timeZone": "America/Argentina/Mendoza",
+                        "country": {
+                          "code": "AR",
+                          "name": "Argentina",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "MEL": {
+                    "value": [
+                      {
+                        "code": "MEL",
+                        "name": "Melboure",
+                        "timeZone": "Australia/Melbourne",
+                        "country": {
+                          "code": "AU",
+                          "name": "Australia",
+                          "continent": {
+                            "code": "OC",
+                            "name": "Oceania"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "MEX": {
+                    "value": [
+                      {
+                        "code": "MEX",
+                        "name": "Mexico City",
+                        "timeZone": "America/Mexico_City",
+                        "country": {
+                          "code": "MX",
+                          "name": "Mexico",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "MIA": {
+                    "value": [
+                      {
+                        "code": "MIA",
+                        "name": "Miami",
+                        "timeZone": "America/New_York",
+                        "country": {
+                          "code": "US",
+                          "name": "United States of America",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "MIL": {
+                    "value": [
+                      {
+                        "code": "MIL",
+                        "name": "Milan",
+                        "timeZone": "Europe/Rome",
+                        "country": {
+                          "code": "IT",
+                          "name": "Italy",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "MOS": {
+                    "value": [
+                      {
+                        "code": "MOS",
+                        "name": "Moscow",
+                        "timeZone": "Europe/Moscow",
+                        "country": {
+                          "code": "RU",
+                          "name": "Russian Federation",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "MUC": {
+                    "value": [
+                      {
+                        "code": "MUC",
+                        "name": "Munich",
+                        "timeZone": "Europe/Berlin",
+                        "country": {
+                          "code": "DE",
+                          "name": "Germany",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "MVD": {
+                    "value": [
+                      {
+                        "code": "MVD",
+                        "name": "Montevideo",
+                        "timeZone": "America/Montevideo",
+                        "country": {
+                          "code": "UY",
+                          "name": "Uruguay",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "NBO": {
+                    "value": [
+                      {
+                        "code": "NBO",
+                        "name": "Nairobi",
+                        "timeZone": "Africa/Nairobi",
+                        "country": {
+                          "code": "KE",
+                          "name": "Kenya",
+                          "continent": {
+                            "code": "AF",
+                            "name": "Africa"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "NYC": {
+                    "value": [
+                      {
+                        "code": "NYC",
+                        "name": "New York",
+                        "timeZone": "America/New_York",
+                        "country": {
+                          "code": "US",
+                          "name": "United States of America",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "ORL": {
+                    "value": [
+                      {
+                        "code": "ORL",
+                        "name": "Orlando",
+                        "timeZone": "America/New_York",
+                        "country": {
+                          "code": "US",
+                          "name": "United States of America",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "OSA": {
+                    "value": [
+                      {
+                        "code": "OSA",
+                        "name": "Osaka",
+                        "timeZone": "Asia/Tokyo",
+                        "country": {
+                          "code": "JP",
+                          "name": "Japan",
+                          "continent": {
+                            "code": "AS",
+                            "name": "Asia"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "OTP": {
+                    "value": [
+                      {
+                        "code": "OTP",
+                        "name": "Bucharest",
+                        "timeZone": "Europe/Bucharest",
+                        "country": {
+                          "code": "RO",
+                          "name": "Romania",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "PAR": {
+                    "value": [
+                      {
+                        "code": "PAR",
+                        "name": "Paris",
+                        "timeZone": "Europe/Paris",
+                        "country": {
+                          "code": "FR",
+                          "name": "France",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "PDP": {
+                    "value": [
+                      {
+                        "code": "PDP",
+                        "name": "Punta del Este",
+                        "timeZone": "America/Montevideo",
+                        "country": {
+                          "code": "UY",
+                          "name": "Uruguay",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "PER": {
+                    "value": [
+                      {
+                        "code": "PER",
+                        "name": "Perth",
+                        "timeZone": "Australia/Perth",
+                        "country": {
+                          "code": "AU",
+                          "name": "Australia",
+                          "continent": {
+                            "code": "OC",
+                            "name": "Oceania"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "PRG": {
+                    "value": [
+                      {
+                        "code": "PRG",
+                        "name": "Prague",
+                        "timeZone": "Europe/Prague",
+                        "country": {
+                          "code": "CZ",
+                          "name": "Czech Republic",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "PTY": {
+                    "value": [
+                      {
+                        "code": "PTY",
+                        "name": "Panama City",
+                        "timeZone": "America/Panama",
+                        "country": {
+                          "code": "PA",
+                          "name": "Panama",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "PUJ": {
+                    "value": [
+                      {
+                        "code": "PUJ",
+                        "name": "Punta Cana",
+                        "timeZone": "America/Santo_Domingo",
+                        "country": {
+                          "code": "DO",
+                          "name": "Dominican Republic",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "RIO": {
+                    "value": [
+                      {
+                        "code": "RIO",
+                        "name": "Rio de Janeiro",
+                        "timeZone": "America/Sao_Paulo",
+                        "country": {
+                          "code": "BR",
+                          "name": "Brazil",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "ROM": {
+                    "value": [
+                      {
+                        "code": "ROM",
+                        "name": "Rome",
+                        "timeZone": "Europe/Rome",
+                        "country": {
+                          "code": "IT",
+                          "name": "Italy",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "SAO": {
+                    "value": [
+                      {
+                        "code": "SAO",
+                        "name": "Sao Paulo",
+                        "timeZone": "America/Sao_Paulo",
+                        "country": {
+                          "code": "BR",
+                          "name": "Brazil",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "SCL": {
+                    "value": [
+                      {
+                        "code": "SCL",
+                        "name": "Santiago",
+                        "timeZone": "America/Santiago",
+                        "country": {
+                          "code": "CL",
+                          "name": "Chile",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "SEL": {
+                    "value": [
+                      {
+                        "code": "SEL",
+                        "name": "Seoul",
+                        "timeZone": "Asia/Seoul",
+                        "country": {
+                          "code": "KR",
+                          "name": "Korea, South",
+                          "continent": {
+                            "code": "AS",
+                            "name": "Asia"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "SFO": {
+                    "value": [
+                      {
+                        "code": "SFO",
+                        "name": "San Francisco",
+                        "timeZone": "America/Los_Angeles",
+                        "country": {
+                          "code": "US",
+                          "name": "United States of America",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "SHA": {
+                    "value": [
+                      {
+                        "code": "SHA",
+                        "name": "Shanghai",
+                        "timeZone": "Asia/Shanghai",
+                        "country": {
+                          "code": "CN",
+                          "name": "China",
+                          "continent": {
+                            "code": "AS",
+                            "name": "Asia"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "SIN": {
+                    "value": [
+                      {
+                        "code": "SIN",
+                        "name": "Singapore",
+                        "timeZone": "Asia/Singapore",
+                        "country": {
+                          "code": "SG",
+                          "name": "Singapore",
+                          "continent": {
+                            "code": "AS",
+                            "name": "Asia"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "SJO": {
+                    "value": [
+                      {
+                        "code": "SJO",
+                        "name": "San Jose",
+                        "timeZone": "America/Costa_Rica",
+                        "country": {
+                          "code": "CR",
+                          "name": "Costa Rica",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "SLA": {
+                    "value": [
+                      {
+                        "code": "SLA",
+                        "name": "Salta",
+                        "timeZone": "America/Argentina/Salta",
+                        "country": {
+                          "code": "AR",
+                          "name": "Argentina",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "SSA": {
+                    "value": [
+                      {
+                        "code": "SSA",
+                        "name": "Salvador",
+                        "timeZone": "America/Bahia",
+                        "country": {
+                          "code": "BR",
+                          "name": "Brazil",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "STO": {
+                    "value": [
+                      {
+                        "code": "STO",
+                        "name": "Stockholm",
+                        "timeZone": "Europe/Stockholm",
+                        "country": {
+                          "code": "SE",
+                          "name": "Sweden",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "SYD": {
+                    "value": [
+                      {
+                        "code": "SYD",
+                        "name": "Sydney",
+                        "timeZone": "Australia/Sydney",
+                        "country": {
+                          "code": "AU",
+                          "name": "Australia",
+                          "continent": {
+                            "code": "OC",
+                            "name": "Oceania"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "TLV": {
+                    "value": [
+                      {
+                        "code": "TLV",
+                        "name": "Tel Aviv",
+                        "timeZone": "Asia/Jerusalem",
+                        "country": {
+                          "code": "IL",
+                          "name": "Israel",
+                          "continent": {
+                            "code": "AS",
+                            "name": "Asia"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "TOK": {
+                    "value": [
+                      {
+                        "code": "TOK",
+                        "name": "Tokyo",
+                        "timeZone": "Asia/Tokyo",
+                        "country": {
+                          "code": "JP",
+                          "name": "Japan",
+                          "continent": {
+                            "code": "AS",
+                            "name": "Asia"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "UIO": {
+                    "value": [
+                      {
+                        "code": "UIO",
+                        "name": "Quito",
+                        "timeZone": "America/Guayaquil",
+                        "country": {
+                          "code": "EC",
+                          "name": "Ecuador",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "USH": {
+                    "value": [
+                      {
+                        "code": "USH",
+                        "name": "Ushuaia",
+                        "timeZone": "America/Argentina/Ushuaia",
+                        "country": {
+                          "code": "AR",
+                          "name": "Argentina",
+                          "continent": {
+                            "code": "SA",
+                            "name": "South America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "VIE": {
+                    "value": [
+                      {
+                        "code": "VIE",
+                        "name": "Vienna",
+                        "timeZone": "Europe/Vienna",
+                        "country": {
+                          "code": "AT",
+                          "name": "Austria",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "WAS": {
+                    "value": [
+                      {
+                        "code": "WAS",
+                        "name": "Washington",
+                        "timeZone": "America/New_York",
+                        "country": {
+                          "code": "US",
+                          "name": "United States of America",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "YMQ": {
+                    "value": [
+                      {
+                        "code": "YMQ",
+                        "name": "Montreal",
+                        "timeZone": "America/Toronto",
+                        "country": {
+                          "code": "CA",
+                          "name": "Canada",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "YTO": {
+                    "value": [
+                      {
+                        "code": "YTO",
+                        "name": "Toronto",
+                        "timeZone": "America/Toronto",
+                        "country": {
+                          "code": "CA",
+                          "name": "Canada",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "YVR": {
+                    "value": [
+                      {
+                        "code": "YVR",
+                        "name": "Vancouver",
+                        "timeZone": "America/Vancouver",
+                        "country": {
+                          "code": "CA",
+                          "name": "Canada",
+                          "continent": {
+                            "code": "NA",
+                            "name": "North America"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "ZRH": {
+                    "value": [
+                      {
+                        "code": "ZRH",
+                        "name": "Zurich",
+                        "timeZone": "Europe/Zurich",
+                        "country": {
+                          "code": "CH",
+                          "name": "Switzerland",
+                          "continent": {
+                            "code": "EU",
+                            "name": "Europe"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "unknown": {
+                    "value": []
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Without codes (40001) or with more than 50 codes (40002). Not retried",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The database of the catalog is not available (50301). The client retries it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "City": {
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "timeZone",
+          "country"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "IANA id of the time zone, never an offset"
+          },
+          "country": {
+            "$ref": "#/components/schemas/Country"
+          }
+        }
+      },
+      "Country": {
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "continent"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "continent": {
+            "$ref": "#/components/schemas/Continent"
+          }
+        }
+      },
+      "Continent": {
+        "type": "object",
+        "required": [
+          "code",
+          "name"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "shortDescription": {
+            "type": "string"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,67 @@
+# Observability of the rollout of the catalog (M2 C4): Prometheus (history and alerts), Alertmanager (notifications)
+# and Grafana (dashboard catalog-rollout). Based on twa-observability, only with what the monolith and the catalog
+# service need. It runs in the same project as the stack, so Prometheus scrapes the services by their name:
+#   docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d --build   (or make start-observability)
+# Prometheus http://localhost:9090 · Alertmanager http://localhost:9093 · Grafana http://localhost:3000
+services:
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v3.5.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      # The longest criterion of the rollout is 14 days (stage 5) and the baseline B uses 7 days: 35 days with margin
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-35d}
+      # POST /-/reload applies changes of the rules without a restart
+      - --web.enable-lifecycle
+      - --web.external-url=http://localhost:9090
+    ports:
+      - 9090:9090
+    volumes:
+      - ./observability/prometheus:/etc/prometheus:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - alertmanager
+    restart: unless-stopped
+
+  alertmanager:
+    container_name: alertmanager
+    image: prom/alertmanager:v0.28.1
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --web.external-url=http://localhost:9093
+    ports:
+      - 9093:9093
+    volumes:
+      - ./observability/alertmanager:/etc/alertmanager:ro
+      - alertmanager-data:/alertmanager
+    restart: unless-stopped
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:12.1.1
+    ports:
+      - 3000:3000
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      # Local: without login, read only
+      GF_AUTH_ANONYMOUS_ENABLED: ${GRAFANA_ANONYMOUS_ENABLED:-true}
+      GF_AUTH_ANONYMOUS_ORG_ROLE: ${GRAFANA_ANONYMOUS_ROLE:-Viewer}
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/catalog-rollout.json
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  alertmanager-data:
+  grafana-data:

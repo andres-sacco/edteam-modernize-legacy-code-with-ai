@@ -1,0 +1,42 @@
+# Alerts of the stack that watches the services (taken from twa-observability, without the pipelines of logs, traces
+# and batch jobs that this stack does not have). Runbooks in observability/runbooks/platform.md.
+groups:
+  - name: platform
+    rules:
+      # Dead man's switch: always firing. If its receiver stops receiving it, the chain of alerts is broken
+      - alert: Watchdog
+        expr: vector(1)
+        labels:
+          severity: none
+        annotations:
+          summary: "Alerta permanente para verificar que Prometheus y Alertmanager funcionan"
+
+      - alert: PrometheusRuleEvaluationFailures
+        expr: increase(prometheus_rule_evaluation_failures_total[5m]) > 0
+        labels:
+          severity: ticket
+          team: platform
+        annotations:
+          summary: "Prometheus no puede evaluar reglas del grupo {{ $labels.rule_group }}"
+          description: "Las alertas de ese grupo no van a disparar hasta corregirlo."
+          runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/platform.md#prometheusruleevaluationfailures"
+
+      - alert: PrometheusNotificationsFailing
+        expr: rate(prometheus_notifications_errors_total[5m]) > 0
+        for: 10m
+        labels:
+          severity: ticket
+          team: platform
+        annotations:
+          summary: "Prometheus no puede enviar alertas a Alertmanager"
+          runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/platform.md#prometheusnotificationsfailing"
+
+      - alert: AlertmanagerNotificationsFailing
+        expr: rate(alertmanager_notifications_failed_total[5m]) > 0
+        for: 10m
+        labels:
+          severity: ticket
+          team: platform
+        annotations:
+          summary: "Alertmanager no puede notificar por {{ $labels.integration }}"
+          runbook_url: "https://github.com/andres-sacco/twa-flights-monolith/blob/main/observability/runbooks/platform.md#alertmanagernotificationsfailing"

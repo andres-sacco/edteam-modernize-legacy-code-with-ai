@@ -1,0 +1,22 @@
+target/
+*.log
+.idea/
+*.iml
+.settings/
+.project
+.classpath
+.claude/settings.local.json
+
+# Passwords of the local stack, created by ./scripts/init-env.sh
+.env
+
+# Archivos de trabajo que generan los prompts del curso (docs/prompts) en la raíz del proyecto
+/analisis-*
+/ejemplos/
+/copia-flights.sql
+/backup-*.sql
+# The same files when the commands run inside the folder of the monolith
+/twa-flights-monolith/analisis-*
+/twa-flights-monolith/ejemplos/
+/twa-flights-monolith/copia-flights.sql
+/twa-flights-monolith/backup-*.sql

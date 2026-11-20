@@ -1,0 +1,1 @@
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"catalog_rollout_rollbacks_total","instance":"twa-flights-monolith-2","job":"twa-flights-monolith","rule":"CatalogRemoteErrorsCritical","service":"twa-flights-monolith","team":"flights"},"value":[1795009363.520,"1"]}]}}

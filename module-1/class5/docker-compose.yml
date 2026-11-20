@@ -1,0 +1,52 @@
+services:
+  flights-db:
+    container_name: flights-db
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'flights'
+      MYSQL_ROOT_PASSWORD: 'muppet'
+    ports:
+      - 3320:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pmuppet"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  microcks:
+    container_name: microcks
+    image: quay.io/microcks/microcks-uber:1.12.1
+    restart: always
+    ports:
+      - 8585:8080
+
+  microcks-importer:
+    container_name: microcks-importer
+    image: curlimages/curl:8.10.1
+    environment:
+      MICROCKS_URL: http://microcks:8080
+    volumes:
+      - ./microcks:/artifacts:ro
+    entrypoint: ["/bin/sh", "/artifacts/import-artifacts.sh"]
+    depends_on:
+      - microcks
+
+  twa-flights-monolith:
+    build: .
+    container_name: twa-flights-monolith
+    ports:
+      - 8080:8080
+    restart: always
+    environment:
+      DB_HOST: flights-db
+      DB_PORT: 3306
+      PROVIDER_ALPHA_HOST: http://microcks:8080/rest/provider-alpha/1.0
+      PROVIDER_BETA_HOST: http://microcks:8080/rest/provider-beta/1.0
+      PROVIDER_GAMMA_HOST: http://microcks:8080/rest/provider-gamma/1.0
+      PRICING_API_KEY: twa-pricing-local-key
+    depends_on:
+      flights-db:
+        condition: service_healthy
+      microcks-importer:
+        condition: service_completed_successfully

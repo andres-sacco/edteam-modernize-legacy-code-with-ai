@@ -1,0 +1,56 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.3)
+
+2026-11-15T19:56:18.575Z  INFO 1 --- [twa-flights-monolith] [           main] com.twa.flights.FlightsApplication       : Starting FlightsApplication v1.0.0-SNAPSHOT using Java 21.0.13 with PID 1 (/application/twa-flights-monolith.jar started by root in /)
+2026-11-15T19:56:18.576Z  INFO 1 --- [twa-flights-monolith] [           main] com.twa.flights.FlightsApplication       : No active profile set, falling back to 1 default profile: "default"
+2026-11-15T19:56:19.245Z  INFO 1 --- [twa-flights-monolith] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-11-15T19:56:19.289Z  INFO 1 --- [twa-flights-monolith] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 39 ms. Found 3 JPA repository interfaces.
+2026-11-15T19:56:19.752Z  INFO 1 --- [twa-flights-monolith] [           main] o.s.b.w.e.j.JettyServletWebServerFactory : Server initialized with port: 8080
+2026-11-15T19:56:19.755Z  INFO 1 --- [twa-flights-monolith] [           main] org.eclipse.jetty.server.Server          : jetty-12.0.6; built: 2024-01-30T02:43:24.387Z; git: 78ab6e6ba163f89cdd97f2ae0283fbb5e371cfaf; jvm 21.0.13+9-LTS
+2026-11-15T19:56:19.783Z  INFO 1 --- [twa-flights-monolith] [           main] o.e.j.s.h.ContextHandler.application     : Initializing Spring embedded WebApplicationContext
+2026-11-15T19:56:19.784Z  INFO 1 --- [twa-flights-monolith] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1163 ms
+2026-11-15T19:56:19.921Z  INFO 1 --- [twa-flights-monolith] [           main] o.e.j.session.DefaultSessionIdManager    : Session workerName=node0
+2026-11-15T19:56:19.925Z  INFO 1 --- [twa-flights-monolith] [           main] o.e.jetty.server.handler.ContextHandler  : Started osbwej.JettyEmbeddedWebAppContext@32b112a1{application,/api/flights,b=[file:/tmp/jetty-docbase.8080.11238045427228106578/, URLResource@48494E33(jar:nested:///application/twa-flights-monolith.jar/!BOOT-INF/lib/swagger-ui-5.10.3.jar!/META-INF/resources/)],a=AVAILABLE,h=oeje10s.SessionHandler@5c5c7cc4{STARTED}}
+2026-11-15T19:56:19.926Z  INFO 1 --- [twa-flights-monolith] [           main] o.e.j.e.servlet.ServletContextHandler    : Started osbwej.JettyEmbeddedWebAppContext@32b112a1{application,/api/flights,b=[file:/tmp/jetty-docbase.8080.11238045427228106578/, URLResource@48494E33(jar:nested:///application/twa-flights-monolith.jar/!BOOT-INF/lib/swagger-ui-5.10.3.jar!/META-INF/resources/)],a=AVAILABLE,h=oeje10s.SessionHandler@5c5c7cc4{STARTED}}
+2026-11-15T19:56:19.931Z  INFO 1 --- [twa-flights-monolith] [           main] org.eclipse.jetty.server.Server          : Started oejs.Server@216f01{STARTING}[12.0.6,sto=0] @1961ms
+2026-11-15T19:56:19.979Z  INFO 1 --- [twa-flights-monolith] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-11-15T19:56:22.200Z  INFO 1 --- [twa-flights-monolith] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@6eaf030c
+2026-11-15T19:56:22.201Z  INFO 1 --- [twa-flights-monolith] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-11-15T19:56:22.260Z  INFO 1 --- [twa-flights-monolith] [           main] o.f.c.internal.license.VersionPrinter    : Flyway Community Edition 9.22.3 by Redgate
+2026-11-15T19:56:22.260Z  INFO 1 --- [twa-flights-monolith] [           main] o.f.c.internal.license.VersionPrinter    : See release notes here: https://rd.gt/416ObMi
+2026-11-15T19:56:22.261Z  INFO 1 --- [twa-flights-monolith] [           main] o.f.c.internal.license.VersionPrinter    : 
+2026-11-15T19:56:22.273Z  INFO 1 --- [twa-flights-monolith] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:mysql://flights-db:3306/flights (MySQL 8.0)
+2026-11-15T19:56:22.295Z  INFO 1 --- [twa-flights-monolith] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table `flights`.`flyway_schema_history` does not exist yet
+2026-11-15T19:56:22.297Z  INFO 1 --- [twa-flights-monolith] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 8 migrations (execution time 00:00.011s)
+2026-11-15T19:56:22.306Z  INFO 1 --- [twa-flights-monolith] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table `flights`.`flyway_schema_history` ...
+2026-11-15T19:56:22.355Z  INFO 1 --- [twa-flights-monolith] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema `flights`: << Empty Schema >>
+2026-11-15T19:56:22.359Z  INFO 1 --- [twa-flights-monolith] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `flights` to version "1.0 - create catalog tables"
+2026-11-15T19:56:22.499Z  INFO 1 --- [twa-flights-monolith] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `flights` to version "1.1 - insert catalog rows"
+2026-11-15T19:56:22.555Z  INFO 1 --- [twa-flights-monolith] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `flights` to version "1.2 - create pricing tables"
+2026-11-15T19:56:22.636Z  INFO 1 --- [twa-flights-monolith] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `flights` to version "1.3 - insert pricing rows"
+2026-11-15T19:56:22.652Z  INFO 1 --- [twa-flights-monolith] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `flights` to version "1.4 - create cluster search table"
+2026-11-15T19:56:22.688Z  INFO 1 --- [twa-flights-monolith] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `flights` to version "1.5 - insert more cities"
+2026-11-15T19:56:22.714Z  INFO 1 --- [twa-flights-monolith] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `flights` to version "1.6 - insert pricing rows provider gamma"
+2026-11-15T19:56:22.724Z  INFO 1 --- [twa-flights-monolith] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `flights` to version "1.7 - commercial policy administration"
+2026-11-15T19:56:22.844Z  INFO 1 --- [twa-flights-monolith] [           main] o.f.core.internal.command.DbMigrate      : Successfully applied 8 migrations to schema `flights`, now at version v1.7 (execution time 00:00.394s)
+2026-11-15T19:56:22.892Z  INFO 1 --- [twa-flights-monolith] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-11-15T19:56:22.924Z  INFO 1 --- [twa-flights-monolith] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.4.4.Final
+2026-11-15T19:56:22.954Z  INFO 1 --- [twa-flights-monolith] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-11-15T19:56:23.082Z  INFO 1 --- [twa-flights-monolith] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-11-15T19:56:23.606Z  INFO 1 --- [twa-flights-monolith] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-11-15T19:56:23.625Z  INFO 1 --- [twa-flights-monolith] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-11-15T19:56:23.972Z  INFO 1 --- [twa-flights-monolith] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-11-15T19:56:24.296Z  INFO 1 --- [twa-flights-monolith] [           main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: ServletContext resource [/index.html]
+2026-11-15T19:56:24.648Z  INFO 1 --- [twa-flights-monolith] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoint(s) beneath base path '/actuator'
+2026-11-15T19:56:24.686Z  INFO 1 --- [twa-flights-monolith] [           main] o.e.j.s.h.ContextHandler.application     : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-11-15T19:56:24.687Z  INFO 1 --- [twa-flights-monolith] [           main] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-11-15T19:56:24.687Z  INFO 1 --- [twa-flights-monolith] [           main] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
+2026-11-15T19:56:24.695Z  INFO 1 --- [twa-flights-monolith] [           main] o.e.jetty.server.AbstractConnector       : Started ServerConnector@2c492b03{HTTP/1.1, (http/1.1)}{0.0.0.0:8080}
+2026-11-15T19:56:24.696Z  INFO 1 --- [twa-flights-monolith] [           main] o.s.b.web.embedded.jetty.JettyWebServer  : Jetty started on port 8080 (http/1.1) with context path '/api/flights'
+2026-11-15T19:56:24.707Z  INFO 1 --- [twa-flights-monolith] [           main] com.twa.flights.FlightsApplication       : Started FlightsApplication in 6.435 seconds (process running for 6.737)
